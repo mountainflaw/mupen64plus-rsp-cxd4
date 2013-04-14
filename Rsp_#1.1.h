@@ -164,7 +164,7 @@ __declspec(dllexport) void DllTest(HWND hParent);
 			should have performed.
 			(this value is ignored if the RSP is stoped)
 *******************************************************************/ 
-__declspec(dllexport) unsigned long DoRspCycles(unsigned long Cycles);
+__declspec(dllexport) unsigned int DoRspCycles(unsigned int Cycles);
 
 /******************************************************************
   Function: GetDllInfo
@@ -198,7 +198,7 @@ __declspec(dllexport) void GetRspDebugInfo(RSPDEBUG_INFO *RSPDebugInfo);
 			control between the RSP and r4300i core.
   output:   none
 *******************************************************************/ 
-__declspec(dllexport) void InitiateRSP(RSP_INFO Rsp_Info, unsigned long *CycleCount);
+__declspec(dllexport) void InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount);
 
 /******************************************************************
   Function: InitiateRSPDebugger

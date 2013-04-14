@@ -31,7 +31,7 @@ __declspec(dllexport) void DllConfig(HWND hParent)
     return;
 }
 #endif
-__declspec(dllexport) unsigned long _cdecl DoRspCycles(unsigned long cycles)
+__declspec(dllexport) unsigned int _cdecl DoRspCycles(unsigned int cycles)
 {
     if (*RSP.SP_STATUS_REG & 0x00000003)
     {
@@ -99,7 +99,7 @@ strcpy(/* Not meant to be a CRT dependency--should optimize to QWORD moves. */
     PluginInfo -> MemoryBswaped = 1;
     return;
 }
-__declspec(dllexport) void InitiateRSP(RSP_INFO Rsp_Info, unsigned long *CycleCount)
+__declspec(dllexport) void InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
 {
     if (CycleCount)
         *CycleCount = 0x00000000; /* cycle-accuracy not doable with today's hosts */
