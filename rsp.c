@@ -6,6 +6,9 @@
 #include "Rsp_#1.1.h"
 #include "rsp.h"
 
+#define RSP_CXD4_VERSION 0x0101
+#define RSP_CXD4_NAME "Iconoclast's LLE SP Interpreter"
+
 EXPORT void CALL CloseDLL(void)
 {
     return;
@@ -91,10 +94,10 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
 }
 EXPORT void CALL GetDllInfo(PLUGIN_INFO *PluginInfo)
 {
-    PluginInfo -> Version = 0x0101;
+    PluginInfo -> Version = RSP_CXD4_VERSION;
     PluginInfo -> Type = PLUGIN_TYPE_RSP;
 strcpy(/* Not meant to be a CRT dependency--should optimize to QWORD moves. */
-    PluginInfo -> Name, "Iconoclast's LLE SP Interpreter");
+    PluginInfo -> Name, RSP_CXD4_NAME);
     PluginInfo -> NormalMemory = 0;
     PluginInfo -> MemoryBswaped = 1;
     return;
