@@ -5,12 +5,19 @@
 extern "C" {
 #endif
 
+#if defined(M64P_PLUGIN_API)
+#define M64P_PLUGIN_PROTOTYPES 1
+#include "m64p_types.h"
+#include "m64p_common.h"
+#include "m64p_plugin.h"
+#else
 #if defined(WIN32)
   #define EXPORT __declspec(dllexport)
   #define CALL   __cdecl
 #else
   #define EXPORT __attribute__((visibility("default")))
   #define CALL
+#endif
 #endif
 
 #define PLUGIN_TYPE_RSP             1
@@ -39,6 +46,7 @@ typedef struct {
 	                          bswap on a dword (32 bits) boundry */
 } PLUGIN_INFO;
 
+#if !defined(M64P_PLUGIN_API)
 typedef struct {
 	HINSTANCE hInst;
 	int MemoryBswaped;    /* If this is set to TRUE, then the memory has been pre
@@ -74,6 +82,7 @@ typedef struct {
 	void (*ProcessRdpList)( void );
 	void (*ShowCFB)( void );
 } RSP_INFO;
+#endif
 
 typedef struct tagRECT {
     long left;

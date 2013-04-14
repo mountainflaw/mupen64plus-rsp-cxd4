@@ -9,6 +9,53 @@
 #define RSP_CXD4_VERSION 0x0101
 #define RSP_CXD4_NAME "Iconoclast's LLE SP Interpreter"
 
+#if defined(M64P_PLUGIN_API)
+#define RSP_PLUGIN_API_VERSION 0x020000
+static int l_PluginInit = 0;
+
+EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Context,
+                                     void (*DebugCallback)(void *, int, const char *))
+{
+    if (l_PluginInit)
+        return M64ERR_ALREADY_INIT;
+
+    l_PluginInit = 1;
+    return M64ERR_SUCCESS;
+}
+
+EXPORT m64p_error CALL PluginShutdown(void)
+{
+    if (!l_PluginInit)
+        return M64ERR_NOT_INIT;
+
+    l_PluginInit = 0;
+    return M64ERR_SUCCESS;
+}
+
+EXPORT m64p_error CALL PluginGetVersion(m64p_plugin_type *PluginType, int *PluginVersion, int *APIVersion, const char **PluginNamePtr, int *Capabilities)
+{
+    /* set version info */
+    if (PluginType != NULL)
+        *PluginType = M64PLUGIN_RSP;
+
+    if (PluginVersion != NULL)
+        *PluginVersion = RSP_CXD4_VERSION;
+
+    if (APIVersion != NULL)
+        *APIVersion = RSP_PLUGIN_API_VERSION;
+
+    if (PluginNamePtr != NULL)
+        *PluginNamePtr = RSP_CXD4_NAME;
+
+    if (Capabilities != NULL)
+    {
+        *Capabilities = 0;
+    }
+
+    return M64ERR_SUCCESS;
+}
+#endif
+
 EXPORT void CALL CloseDLL(void)
 {
     return;
