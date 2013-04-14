@@ -19,11 +19,22 @@ inline void message(char *body, int priority)
     return; /* Why?  Because I am keeping Win32-only builds dependency-free. */
 } /* The primary target is GNU/GCC (cross-OS portability, free of APIs). */
 #else
+#if defined(WIN32)
 __declspec(dllimport) int __stdcall MessageBoxA(
     HWND hWnd,
     const char *lpText,
     const char *lpCaption,
     unsigned int uType);
+#else
+int MessageBoxA(void *hwnd,
+    const char *lpText,
+    const char *lpCaption,
+    unsigned int uType)
+{
+    printf("%s: %s\n", lpCaption, lpText);
+    return 0;
+}
+#endif
 /* No need to import the Windows API, just a message trace function. */
 void message(char *body, int priority)
 {
