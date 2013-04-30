@@ -261,24 +261,25 @@ EX:
                 continue;
             case 040: /* LB */
                 addr = (SR[rs &= 31] + imm) & 0x00000FFF;
-                SR[rt] = *(signed char *)(RSP.DMEM + (addr ^ 03));
+                SR[rt] = *(signed char *)(RSP.DMEM + BES(addr));
                 continue;
             case 041: /* LH */
                 addr = (SR[rs &= 31] + imm) & 0x00000FFF;
                 switch (addr & 03)
                 {
                     case 00: /* word-aligned */
-                        SR[rt] = *(signed short *)(RSP.DMEM + (addr + 0x002));
+                        SR[rt] = *(signed short *)(RSP.DMEM + addr + HES(00));
                         continue;
                     case 01:
-                        SR[rt] = *(signed short *)(RSP.DMEM + (addr | 0x000));
+                        SR[rt] = *(signed short *)(RSP.DMEM + addr);
                         continue;
                     case 02:
-                        SR[rt] = *(signed short *)(RSP.DMEM + (addr - 0x002));
+                        SR[rt] = *(signed short *)(RSP.DMEM + addr - HES(00));
                         continue;
                     case 03:
-                        SR[rt]  = RSP.DMEM[addr - 0x003] << 8;
-                        SR[rt] |= RSP.DMEM[(addr += 0x004) & 0x00000FFF];
+                        SR[rt]  = RSP.DMEM[addr - BES(00)] << 8;
+                        addr += 0x001 + BES(00);
+                        SR[rt] |= RSP.DMEM[addr &= 0x00000FFF];
                         SR[rt]  = (signed short)(SR[rt]);
                         continue;
                 }
@@ -324,46 +325,48 @@ EX:
                 }
             case 044: /* LBU */
                 addr = (SR[rs &= 31] + imm) & 0x00000FFF;
-                SR[rt] = *(unsigned char *)(RSP.DMEM + (addr ^ 03));
+                SR[rt] = *(unsigned char *)(RSP.DMEM + BES(addr));
                 continue;
             case 045: /* LHU */
                 addr = (SR[rs &= 31] + imm) & 0x00000FFF;
                 switch (addr & 03)
                 {
                     case 00: /* word-aligned */
-                        SR[rt] = *(unsigned short *)(RSP.DMEM + (addr + 0x002));
+                        SR[rt] = *(unsigned short *)(RSP.DMEM + addr + HES(00));
                         continue;
                     case 01:
-                        SR[rt] = *(unsigned short *)(RSP.DMEM + (addr | 0x000));
+                        SR[rt] = *(unsigned short *)(RSP.DMEM + addr);
                         continue;
                     case 02:
-                        SR[rt] = *(unsigned short *)(RSP.DMEM + (addr - 0x002));
+                        SR[rt] = *(unsigned short *)(RSP.DMEM + addr - HES(00));
                         continue;
                     case 03:
-                        SR[rt]  = RSP.DMEM[addr - 0x003] << 8;
-                        SR[rt] |= RSP.DMEM[(addr += 0x004) & 0x00000FFF];
+                        SR[rt]  = RSP.DMEM[addr - BES(00)] << 8;
+                        addr += 0x001 + BES(00);
+                        SR[rt] |= RSP.DMEM[addr &= 0x00000FFF];
                         continue;
                 }
             case 050: /* SB */
                 addr = (SR[rs &= 31] + imm) & 0x00000FFF;
-                *(RSP.DMEM + (addr ^ 03)) = SR[rt] & 0xFF;
+                *(RSP.DMEM + BES(addr)) = SR[rt] & 0xFF;
                 continue;
             case 051: /* SH */
                 addr = (SR[rs &= 31] + imm) & 0x00000FFF;
                 switch (addr & 03)
                 {
                     case 00: /* word-aligned */
-                        *(short *)(RSP.DMEM + (addr + 0x002)) = SR[rt] & 0xFFFF;
+                        *(short *)(RSP.DMEM + addr + HES(00)) = SR[rt] & 0xFFFF;
                         continue;
                     case 01:
-                        *(short *)(RSP.DMEM + (addr | 0x000)) = SR[rt] & 0xFFFF;
+                        *(short *)(RSP.DMEM + addr) = SR[rt] & 0xFFFF;
                         continue;
                     case 02:
-                        *(short *)(RSP.DMEM + (addr - 0x002)) = SR[rt] & 0xFFFF;
+                        *(short *)(RSP.DMEM + addr - HES(00)) = SR[rt] & 0xFFFF;
                         continue;
                     case 03:
-                        RSP.DMEM[addr - 0x003] = (SR[rt] >> 8) & 0xFF;
-                        RSP.DMEM[(addr += 0x004) & 0x00000FFF] = SR[rt] & 0xFF;
+                        RSP.DMEM[addr - BES(00)] = (SR[rt] >> 8) & 0xFF;
+                        addr += 0x001 + BES(00);
+                        RSP.DMEM[addr &= 0x00000FFF] = SR[rt] & 0xFF;
                         continue;
                 }
             case 053: /* SW */
@@ -398,15 +401,13 @@ EX:
                         continue;
                 }
             case 062: /* LWC2 */
-                imm  = -1 * !!(inst & 0x00000040);
-                imm &= 0xFF80;
-                imm |= (inst & 0x0000007F);
+                imm &= 0x007F;
+                imm |= -(imm & 0x0040);
                 SP_LWC2[rd](rt, (inst >>= 7) & 0xF, imm, rs &= 31);
                 continue; /* Too complex to maintain in this memory space. */
             case 072: /* SWC2 */
-                imm  = -1 * !!(inst & 0x00000040);
-                imm &= 0xFF80;
-                imm |= (inst & 0x0000007F);
+                imm &= 0x007F;
+                imm |= -(imm & 0x0040);
                 SP_SWC2[rd](rt, (inst >>= 7) & 0xF, imm, rs &= 31);
                 continue; /* Too complex to maintain in this memory space. */
             default:

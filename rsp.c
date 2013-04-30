@@ -93,13 +93,20 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
     { /* Simulation barrier to redirect processing externally. */
 #ifdef EXTERN_COMMAND_LIST_GBI
         case 0x00000001:
-            if (RSP.ProcessDList == 0) {} else
+            if (*(unsigned int *)(RSP.DMEM + 0xFF0) == 0x00000000)
+                break; /* Resident Evil 2 */
+            if (RSP.ProcessDList == NULL) {/*branch next*/} else
                 RSP.ProcessDList();
             *RSP.SP_STATUS_REG |= 0x00000203;
             if (*RSP.SP_STATUS_REG & 0x00000040) /* SP_STATUS_INTR_BREAK */
             {
                 *RSP.MI_INTR_REG |= 0x00000001; /* VR4300 SP interrupt */
                 RSP.CheckInterrupts();
+            }
+            if (*RSP.DPC_STATUS_REG & 0x00000002) /* DPC_STATUS_FREEZE */
+            {
+                message("DPC_CLR_FREEZE", 2);
+                *RSP.DPC_STATUS_REG &= ~0x00000002;
             }
             return 0;
 #endif
@@ -151,12 +158,15 @@ strcpy(/* Not meant to be a CRT dependency--should optimize to QWORD moves. */
 }
 EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
 {
-    if (CycleCount)
-        *CycleCount = 0x00000000; /* cycle-accuracy not doable with today's hosts */
+    if (CycleCount != NULL) /* cycle-accuracy not doable with today's hosts */
+        *CycleCount = 0x00000000;
     RSP = Rsp_Info;
     *RSP.SP_PC_REG = 0x04001000 & 0x00000FFF;
-    while (RSP.IMEM != RSP.DMEM + 4096)
-        message("Virtual host map noncontiguity.", 3);
+    if (RSP.DMEM == RSP.IMEM) /* usually dummy RSP data, not to start ROM */
+        return; /* DMA is not executed just because plugin initiates. */
+    else
+        while (RSP.IMEM != RSP.DMEM + 4096)
+            message("Virtual host map noncontiguity.", 3);
 #ifdef SP_EXECUTE_LOG
     output_log = fopen("simd_log.bin", "ab");
 #endif
