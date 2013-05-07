@@ -69,6 +69,10 @@ static int MFC0_count[32];
 /* Do a swap on the byte endian on a 32-bit segment boundary. */
 #define HES(address) (address ^ 02)
 /* Do a swap on the halfword endian on a 32-bit segment boundary. */
+#define MES(address) (address ^ 01)
+/* Do a mixed endian swap, intermediating between byte and halfword bounds. */
+#define WES(address) (address ^ 00)
+/* Because MIPS and Win32 machines are both 32 bits, no endian update needed. */
 
 // #define VR_B(v, e) (((unsigned char *)VR[v])[e ^ 0x1])
 // #define VR_B(v, e) ((((unsigned char *)(VR + v))[e ^ 0x1]))
@@ -87,6 +91,11 @@ static int MFC0_count[32];
  *
  * That is what the macro above is for.  `VR_S(0, 0x1) = *(short *)addr`.
  * With this we can span across the vector register element indexing barrier.
+ */
+#define VR_H(v, e) (*(short *)((unsigned char *)(*(VR + v)) + e))
+/* The VR_S macro above is more stable but slower.
+ * In some cases, we may as well adjust the elemental offset, if it is odd.
+ * If this is made flexible in advance, we can just use this macro to finish.
  */
 
 #include "su/su.h"
