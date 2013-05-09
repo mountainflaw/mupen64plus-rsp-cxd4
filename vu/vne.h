@@ -38,6 +38,6 @@ static void VNE(int vd, int vs, int vt, int e)
     }
     for (i = 0; i < 8; i++)
         VR[vd][i] = VACC[i].s[LO];
-    /* VCO = 0x0000; /* We already cleared VCO by `VCO >>= 1` 16 times. */
+    /* VCO = 0x0000; *//* We already cleared VCO by `VCO >>= 1` 16 times. */
     return;
 }

@@ -103,6 +103,6 @@ static void (*SP_PRIMARY[64])(void) = {
     SB     ,SH     ,res_S  ,SW     ,res_S  ,res_S  ,res_S  ,res_S  , // 101
     res_S  ,res_S  ,LWC2   ,res_S  ,res_S  ,res_S  ,res_S  ,res_S  , // 110
     res_S  ,res_S  ,SWC2   ,res_S  ,res_S  ,res_S  ,res_S  ,res_S    // 111
-}; /* 000     001     010     011     100     101     110     111 */
+};*//* 000     001     010     011     100     101     110     111 */
 
 #endif

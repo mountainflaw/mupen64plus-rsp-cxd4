@@ -170,17 +170,6 @@ unsigned short VCO; /* vector carry out register */
 unsigned short VCC; /* vector compare code register */
 unsigned char VCE; /* vector compare extension register */
 
-/*
- * vector control register indexing pointer table
- * This is particularly useful for directly executing CFC2 and CTC2.
- */
-static const void *vCR[4] = {
-    &VCO,
-    &VCC,
-    &VCE,
-    &VCE /* Invalid vector control register.  (There are only three.) */
-};
-
 static void res_V(int vd, int rd, int rt, int e)
 {
     rt = rd = 0;

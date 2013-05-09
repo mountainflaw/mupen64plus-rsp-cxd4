@@ -40,7 +40,7 @@ static void VCL(int vd, int vs, int vt, int e)
                 int lz = ((sum & 0x0000FFFF) == 0x00000000);
                 int uz = ((sum & 0xFFFF0000) == 0x00000000); /* !carryout */
 
-                le = (ce & (lz | uz)) | (!ce & (lz & uz));
+                le = (ce & (lz | uz)) | ((!ce) & (lz & uz));
             }
             else
                 le = (VCC >> i) & 1;
