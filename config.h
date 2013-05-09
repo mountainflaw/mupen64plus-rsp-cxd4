@@ -29,11 +29,11 @@
  * See the `void message()` for details on this centralized API invocation.
  */
 
-#undef  EXTERN_COMMAND_LIST_GBI
+//#undef  EXTERN_COMMAND_LIST_GBI
 /* If this is defined, the RSP never executes graphics tasks.
  * Those will all be sent to the video plugin for simulation processing.
  */
-#undef  EXTERN_COMMAND_LIST_ABI
+//#undef  EXTERN_COMMAND_LIST_ABI
 /* If this is defined, the RSP never executes audio tasks; use audio plugin.
  * Enabling both of these does not guarantee that the RSP will never execute.
  */

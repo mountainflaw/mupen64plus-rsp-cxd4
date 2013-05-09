@@ -94,8 +94,8 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
         case 0x00000001:
             if (*(unsigned int *)(RSP.DMEM + 0xFF0) == 0x00000000)
                 break; /* Resident Evil 2 */
-            if (RSP.ProcessDList == NULL) {/*branch next*/} else
-                RSP.ProcessDList();
+            if (RSP.ProcessDlistList == NULL) {/*branch next*/} else
+                RSP.ProcessDlistList();
             *RSP.SP_STATUS_REG |= 0x00000203;
             if (*RSP.SP_STATUS_REG & 0x00000040) /* SP_STATUS_INTR_BREAK */
             {
@@ -111,8 +111,8 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
 #endif
 #ifdef EXTERN_COMMAND_LIST_ABI
         case 0x00000002: /* OSTask.type == M_AUDTASK */
-            if (RSP.ProcessAList == 0) {} else
-                RSP.ProcessAList();
+            if (RSP.ProcessAlistList == 0) {} else
+                RSP.ProcessAlistList();
             *RSP.SP_STATUS_REG |= 0x00000203;
             if (*RSP.SP_STATUS_REG & 0x00000040) /* SP_STATUS_INTR_BREAK */
             {
