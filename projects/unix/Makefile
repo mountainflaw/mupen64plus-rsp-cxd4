@@ -137,6 +137,11 @@ else
   LDFLAGS += -fno-PIC
 endif
 
+ifeq ($(HLEVIDEO), 1)
+  CFLAGS += -DEXTERN_COMMAND_LIST_GBI
+  POSTFIX = -hlevideo
+endif
+
 ifeq ($(BIG_ENDIAN), 1)
   CFLAGS += -DM64P_BIG_ENDIAN
 endif
@@ -268,6 +273,7 @@ targets:
 	@echo "    OPTFLAGS=flag == compiler optimization (default: -O3)"
 	@echo "    WARNFLAGS=flag == compiler warning levels (default: -Wall)"
 	@echo "    PIC=(1|0)     == Force enable/disable of position independent code"
+	@echo "    HLEVIDEO=(1|0) == Move task of gfx emulation to a HLE video plugins"
 	@echo "    POSTFIX=name  == String added to the name of the the build (default: '')"
 	@echo "  Install Options:"
 	@echo "    PREFIX=path   == install/uninstall prefix (default: /usr/local)"
