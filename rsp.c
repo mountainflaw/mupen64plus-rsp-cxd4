@@ -7,7 +7,6 @@
 #include "rsp.h"
 
 #define RSP_CXD4_VERSION 0x0101
-#define RSP_CXD4_NAME "Iconoclast's LLE SP Interpreter"
 
 #if defined(M64P_PLUGIN_API)
 #define RSP_PLUGIN_API_VERSION 0x020000
@@ -45,7 +44,7 @@ EXPORT m64p_error CALL PluginGetVersion(m64p_plugin_type *PluginType, int *Plugi
         *APIVersion = RSP_PLUGIN_API_VERSION;
 
     if (PluginNamePtr != NULL)
-        *PluginNamePtr = RSP_CXD4_NAME;
+        *PluginNamePtr = L_TITLE;
 
     if (Capabilities != NULL)
     {
@@ -151,7 +150,7 @@ EXPORT void CALL GetDllInfo(PLUGIN_INFO *PluginInfo)
     PluginInfo -> Version = RSP_CXD4_VERSION;
     PluginInfo -> Type = PLUGIN_TYPE_RSP;
 strcpy(/* Not meant to be a CRT dependency--should optimize to QWORD moves. */
-    PluginInfo -> Name, RSP_CXD4_NAME);
+    PluginInfo -> Name, L_TITLE);
     PluginInfo -> NormalMemory = 0;
     PluginInfo -> MemoryBswaped = 1;
     return;
