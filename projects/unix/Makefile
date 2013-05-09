@@ -119,9 +119,13 @@ endif
 # base CFLAGS, LDLIBS, and LDFLAGS
 OPTFLAGS ?= -O3
 WARNFLAGS ?= -Wall
-CFLAGS += $(OPTFLAGS) $(WARNFLAGS) -ffast-math -fno-strict-aliasing -fvisibility=hidden -I../../
+CFLAGS += $(OPTFLAGS) $(WARNFLAGS) -fvisibility=hidden -I../../
 CPPFLAGS += -DM64P_PLUGIN_API
 LDFLAGS += $(SHARED)
+
+ifeq ($(CPU), X86)
+  CFLAGS += -m3dnow -mmmx -msse -msse2
+endif
 
 # Since we are building a shared library, we must compile with -fPIC on some architectures
 # On 32-bit x86 systems we do not want to use -fPIC because we don't have to and it has a big performance penalty on this arch
