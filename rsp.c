@@ -63,7 +63,7 @@ EXPORT m64p_error CALL PluginGetVersion(m64p_plugin_type *PluginType, int *Plugi
         *APIVersion = RSP_PLUGIN_API_VERSION;
 
     if (PluginNamePtr != NULL)
-        *PluginNamePtr = L_TITLE;
+        *PluginNamePtr = L_NAME;
 
     if (Capabilities != NULL)
     {
@@ -161,15 +161,15 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
         MessageBoxA(NULL, task_hex, "OSTask.type", 0x00000000);
     }
 #endif
-    run_microcode();
+    run_task();
     return (cycles);
 }
 EXPORT void CALL GetDllInfo(PLUGIN_INFO *PluginInfo)
 {
-    PluginInfo -> Version = RSP_CXD4_VERSION;
+    PluginInfo -> Version = 0x0101; /* zilmar #1.1 (only standard RSP spec) */
     PluginInfo -> Type = PLUGIN_TYPE_RSP;
 strcpy(/* Not meant to be a CRT dependency--should optimize to QWORD moves. */
-    PluginInfo -> Name, L_TITLE);
+    PluginInfo -> Name, L_NAME);
     PluginInfo -> NormalMemory = 0;
     PluginInfo -> MemoryBswaped = 1;
     return;

@@ -18,9 +18,9 @@
  */
 
 /******************************************************************************\
-* Project:  MSP Emulation Table for Vector Unit Computational Operations       *
+* Project:  MSP Emulation Layer for Vector Unit Computational Operations       *
 * Authors:  Iconoclast                                                         *
-* Release:  2013.03.24                                                         *
+* Release:  2013.05.15                                                         *
 * License:  none (public domain)                                               *
 \******************************************************************************/
 #ifndef _VU_H
@@ -30,16 +30,6 @@
 #if !(MAX_LONG < 0xFFFFFFFFFFFF)
 #define MACHINE_SIZE_48_MIN
 #endif
-
-/*
- * RSP virtual registers (of vector unit)
- * The most important are the 32 general-purpose vector registers.
- * The correct way to accurately store these is using big-endian vectors.
- *
- * For ?WC2 we may need to do byte-precision access just as directly.
- * This is ammended by using the `VU_S` and `VU_B` macros defined in `rsp.h`.
- */
-static short VR[32][8];
 
 /*
  * vector-scalar element decoding
@@ -75,6 +65,108 @@ static const int ei[16][8] = {
     { 06, 06, 06, 06, 06, 06, 06, 06 }, /* 6 */
     { 07, 07, 07, 07, 07, 07, 07, 07 }  /* 7 */
 };
+
+/*
+ * RSP virtual registers (of vector unit)
+ * The most important are the 32 general-purpose vector registers.
+ * The correct way to accurately store these is using big-endian vectors.
+ *
+ * For ?WC2 we may need to do byte-precision access just as directly.
+ * This is ammended by using the `VU_S` and `VU_B` macros defined in `rsp.h`.
+ */
+static short VR[32][8];
+static short VC[8]; /* vector/scalar coefficient */
+
+/* #define EMULATE_VECTOR_RESULT_BUFFER */
+/*
+ * There is a hidden vector result register used for moving the data to the
+ * real vector destination register near the end of the execute cycle for a
+ * vector unit instruction, but it is not required to emulate the presence
+ * of this register.  It is currently slower than just directly writing to
+ * the destination vector register file from within the vector operation.
+ */
+
+/* #define PARALLELIZE_VECTOR_TRANSFERS */
+/*
+ * Leaving this defined, the RSP emulator will try to encourage parallel
+ * transactions within vector element operations by shuffling the target
+ * (partially scalar coefficient) vector register as necessary so that
+ * the elements `i`(0..7) of VS can directly match up with 1:1
+ * parallelism to the short elements `i`(0..7) of the shuffled VT.
+ *
+ * Be careful when compiling this with GCC or SSE vector support, as the
+ * compiler may produce unstable results that can crash in some opcodes.
+ */
+
+#ifdef EMULATE_VECTOR_RESULT_BUFFER
+static short Result[8];
+#endif
+
+#ifdef PARALLELIZE_VECTOR_TRANSFERS
+#define VR_T(i) VC[i]
+#else
+#define VR_T(i) VR[vt][ei[e][i]]
+#endif
+
+#ifdef EMULATE_VECTOR_RESULT_BUFFER
+#define VMUL_PTR    Result
+#else
+#define VMUL_PTR    VR[vd]
+#endif
+
+#define VR_D(i) VMUL_PTR[i]
+
+#ifdef PARALLELIZE_VECTOR_TRANSFERS
+#define ACC_R(i)    VR_D(i)
+#define ACC_W(i)    VACC[i].s[00]
+#else
+#define ACC_R(i)    VACC[i].s[00]
+#define ACC_W(i)    VR_D(i)
+#endif
+/*
+ * If we want to parallelize vector transfers, we probably also want to
+ * linearize the register files.  (VR dest. reads from VR src. op. VR trg.)
+ * Lining up the emulator for VR[vd] = VR[vs] & VR[vt] is a lot easier than
+ * doing it for VACC[i](15..0) = VR[vs][i] & VR[vt][i] inside of some loop.
+ * However, the correct order in vector units is to update the accumulator
+ * register file BEFORE the vector register file.  This is slower but more
+ * accurate and even required in some cases (VMAC* and VMAD* operations).
+ * However, it is worth sacrificing if it means doing vectors in parallel.
+ */
+
+int sub_mask[16] = {
+    0x0,
+    0x0,
+    0x1, 0x1,
+    0x3, 0x3, 0x3, 0x3,
+    0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7
+};
+
+inline void SHUFFLE_VECTOR(int vt, int e)
+{
+    register int i, j;
+#if (0 == 0)
+    j = sub_mask[e];
+    e &= j;
+    j ^= 07;
+    for (i = 0; i < 8; i++)
+        VC[i] = VR[vt][(i & j) | e];
+#else
+    if (e & 0x8)
+        for (i = 0; i < 8; i++)
+            VC[i] = VR[vt][(i & 00) | (e & 0x7)];
+    else if (e & 0x4)
+        for (i = 0; i < 8; i++)
+            VC[i] = VR[vt][(i & 04) | (e & 0x3)];
+    else if (e & 0x2)
+        for (i = 0; i < 8; i++)
+            VC[i] = VR[vt][(i & 06) | (e & 0x1)];
+    else /* if ((e == 0b0000) || (e == 0b0001)) */
+        for (i = 0; i < 8; i++)
+            VC[i] = VR[vt][(i & 07) | (e & 0x0)];
+#endif
+    return;
+}
 
 /*
  * accumulator-indexing macros
@@ -117,7 +209,7 @@ static union ACC {
  * because the 48-bit acc needs to be sign-extended when shifting right here.
  */
 
-inline void SIGNED_CLAMP(int vt, int mode)
+inline void SIGNED_CLAMP(short* VD, int mode)
 {
     register int i;
 
@@ -127,27 +219,27 @@ inline void SIGNED_CLAMP(int vt, int mode)
             for (i = 0; i < 8; i++)
                 if (VACC[i].DW & 0x800000000000)
                     if ((VACC[i].DW & 0xFFFF80000000) != 0xFFFF80000000)
-                        VR[vt][i] = -32768;
+                        VD[i] = -32768;
                     else
-                        VR[vt][i] = VACC[i].s[MD];
+                        VD[i] = VACC[i].s[MD];
                 else
                     if ((VACC[i].DW & 0xFFFF80000000) != 0x000000000000)
-                        VR[vt][i] = +32767;
+                        VD[i] = +32767;
                     else
-                        VR[vt][i] = VACC[i].s[MD];
+                        VD[i] = VACC[i].s[MD];
             return;
         case 1: /* sign-clamp accumulator-low (bits 15:0) */
             for (i = 0; i < 8; i++)
                 if (VACC[i].DW & 0x800000000000)
                     if ((VACC[i].DW & 0xFFFF80000000) != 0xFFFF80000000)
-                        VR[vt][i] = 0;
+                        VD[i] = 0;
                     else
-                        VR[vt][i] = VACC[i].s[LO];
+                        VD[i] = VACC[i].s[LO];
                 else
                     if ((VACC[i].DW & 0xFFFF80000000) != 0x000000000000)
-                        VR[vt][i] = ~0;
+                        VD[i] = ~0;
                     else
-                        VR[vt][i] = VACC[i].s[LO];
+                        VD[i] = VACC[i].s[LO];
             return;
         case 2: /* oddified sign-clamp employed by VMACQ and VMULQ */
             for (i = 0; i < 8; i++)
@@ -155,11 +247,11 @@ inline void SIGNED_CLAMP(int vt, int mode)
                 register const signed int result = CLAMP_BASE(i, 17);
 
                 if (result < -32768)
-                    VR[vt][i] = -32768 & ~0x000F;
+                    VD[i] = -32768 & ~0x000F;
                 else if (result > +32767)
-                    VR[vt][i] = +32767 & ~0x000F;
+                    VD[i] = +32767 & ~0x000F;
                 else
-                    VR[vt][i] = result & 0x0000FFF0;
+                    VD[i] = result & 0x0000FFF0;
             }
             return;
     }
@@ -175,7 +267,7 @@ static void res_V(int vd, int rd, int rt, int e)
     rt = rd = 0;
     message("C2\nRESERVED", 2); /* uncertain how to handle reserved, untested */
     for (e = 0; e < 8; e++)
-        VR[vd][e] = 0x0000; /* override behavior (Michael Tedder) */
+        VR_D(e) = 0x0000; /* override behavior (Michael Tedder) */
     return;
 }
 static void res_M(int sa, int rd, int rt, int e)

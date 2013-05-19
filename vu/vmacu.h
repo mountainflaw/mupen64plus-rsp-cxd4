@@ -24,7 +24,7 @@ static void VMACU(int vd, int vs, int vt, int e)
     register int i;
 
     for (i = 0; i < 8; i++)
-        VACC[i].DW += VR[vs][i]*VR[vt][ei[e][i]] << 1;
+        VACC[i].DW += VR[vs][i]*VR_T(i) << 1;
     for (i = 0; i < 8; i++) /* Zero-clamp bits 31..16 of ACC to dest. VR. */
     {
         register signed short result;
@@ -35,7 +35,7 @@ static void VMACU(int vd, int vs, int vt, int e)
         result |= -tmp; /* slice overflow */
         tmp = VACC[i].s[HI] >> 15; /* Zero- or one-extend. */
         result &= ~tmp; /* slice underflow */
-        VR[vd][i] = result;
+        VR_D(i) = result;
     }
     return;
 }
