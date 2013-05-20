@@ -29,6 +29,7 @@ extern "C" {
 #define PLUGIN_TYPE_AUDIO           3
 #define PLUGIN_TYPE_CONTROLLER      4
 
+#if !defined(M64P_PLUGIN_API)
 struct HWND__ {int unused;};
 typedef struct HWND__ *HWND; /* Use void pointers on GCC or old Windows. */
 struct HINSTANCE__ {int unused;};
@@ -37,6 +38,12 @@ struct HMENU__ {int unused;};
 typedef struct HMENU__ *HMENU;
 struct HDC__ {int unused;};
 typedef struct HDC__ *HDC;
+#else
+typedef struct HWND__ *HWND; /* Use void pointers on GCC or old Windows. */
+typedef struct HINSTANCE__ *HINSTANCE;
+typedef struct HMENU__ *HMENU;
+typedef struct HDC__ *HDC;
+#endif
 
 typedef struct {
     unsigned short Version;        /* Should be set to 0x0101 */
@@ -88,6 +95,7 @@ typedef struct {
 } RSP_INFO;
 #endif
 
+#if !defined(M64P_PLUGIN_API)
 typedef struct tagRECT {
     long left;
     long top;
@@ -103,6 +111,10 @@ typedef struct tagPAINTSTRUCT {
     int fIncUpdate;
     unsigned char rgbReserved[32];
 } PAINTSTRUCT;
+#else
+typedef struct tagRECT RECT;
+typedef struct tagPAINTSTRUCT PAINTSTRUCT;
+#endif
 
 typedef struct {
     /* Menu */
