@@ -20,7 +20,7 @@
 /******************************************************************************\
 * Project:  MSP Emulation Layer for Vector Unit Computational Operations       *
 * Authors:  Iconoclast                                                         *
-* Release:  2013.08.08                                                         *
+* Release:  2013.08.17                                                         *
 * License:  none (public domain)                                               *
 \******************************************************************************/
 #ifndef _VU_H
@@ -273,6 +273,21 @@ unsigned short VCO; /* vector carry out register */
 unsigned short VCC; /* vector compare code register */
 unsigned char VCE; /* vector compare extension register */
 
+/*
+ * vector control register indexing pointer table
+ * This is particularly useful for directly executing CFC2 and CTC2.
+ */
+static const void* vCR_old[4] = {
+    &VCO,
+    &VCC,
+    &VCE,
+    &VCE /* Invalid vector control register.  (There are only three.) */
+};
+static signed short* vCR[2] = {
+    &VCO,
+    &VCC
+};
+
 static void res_V(int vd, int rd, int rt, int e)
 {
     rt = rd = 0;
@@ -428,12 +443,12 @@ static void (*SP_COP2_C2[64])(int, int, int, int) = {
     res_V  ,res_V  ,res_V  ,res_V  ,res_V  ,res_V  ,res_V  ,res_V    /* 111 */
 }; /* 000     001     010     011     100     101     110     111 */
 
-/* Some notes about the vector operation codes matrix.
+/*
+ * Some notes about the vector operation codes matrix.
  * VMULQ, VRNDN, and VRNDP did exist but were all for MPEG DCT and omitted.
- * VMACQ ignores `vs` and `vt` and only oddifies, but no games would do that.
+ * VMACQ was for quantization in M_VIDTASK microcodes, which no games used.
  * VSAR operation was perhaps modified, so it is instead called VSAW.
  * VNXOR in other VUs is often called "VXNOR", but not here.
- * VRSQ is the single-precision FP for square roots, not favored by Nintendo.
  * "VNOOP" is a typo of "VNOP", the latter being correct for assemblers.
  */
 #endif
