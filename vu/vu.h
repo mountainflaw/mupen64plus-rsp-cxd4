@@ -57,8 +57,6 @@ ALIGNED static short VACC[3][N];
 #define ACC_M(i)    (VACC_M[i])
 #define ACC_H(i)    (VACC_H[i])
 
-static signed int result[N];
-
 /*
  * Un-define this if your environment lacks the SSE2 instruction set.
  */
