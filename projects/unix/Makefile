@@ -138,7 +138,7 @@ else
 endif
 
 ifeq ($(HLEVIDEO), 1)
-  CFLAGS += -DEXTERN_COMMAND_LIST_GBI
+  CFLAGS += -DM64P_HLEVIDEO
   POSTFIX = -hlevideo
 endif
 

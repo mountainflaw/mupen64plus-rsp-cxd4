@@ -100,27 +100,51 @@
 
 /* Choose whether to define, or keep undefined, the above macros. */
 #define MINIMUM_MESSAGE_PRIORITY    1 // show most messages of RSP weirdness
-// #define EXTERN_COMMAND_LIST_GBI // Not really recommended but user preference
-// #define EXTERN_COMMAND_LIST_ABI // Not really significant but user preference
-// #define SEMAPHORE_LOCK_CORRECTIONS // Recommended only for CPUs supporting it
-// #define WAIT_FOR_CPU_HOST // Never use, except with some ROMs on Project64 2.
+#define EXTERN_COMMAND_LIST_GBI
+#define EXTERN_COMMAND_LIST_ABI
+#define SEMAPHORE_LOCK_CORRECTIONS
+#define WAIT_FOR_CPU_HOST
 // #define SP_EXECUTE_LOG // For debugging only.  Keep it off to free CPU.
 // #define VU_EMULATE_SCALAR_ACCUMULATOR_READ // experimental but needs tests
 
-#define L_TITLE "RSP Interpreter"
+#define L_TITLE "RSP Interpreter by Iconoclast"
 #define L_ABOUT "Thanks for test RDP:  Jabo, ziggy, angrylion\n"\
                 "SP thread examples:  bpoint, zilmar, Ville Linde"
 
-#if defined(EXTERN_COMMAND_LIST_GBI) && defined(EXTERN_COMMAND_LIST_ABI)
-#define L_NAME "Iconoclast's SP Interpreter (HLE)"
-#elif defined(EXTERN_COMMAND_LIST_GBI)
-#define L_NAME "Iconoclast's SP Interpreter (MLE)"
-#elif defined(EXTERN_COMMAND_LIST_ABI)
-#define L_NAME "Iconoclast's SP Interpreter (LLE)"
-#elif defined(SEMAPHORE_LOCK_CORRECTIONS) || defined(WAIT_FOR_CPU_HOST)
-#define L_NAME "Iconoclast's SP Interpreter (PJ642)"
-#elif defined(SP_EXECUTE_LOG) || defined(VU_EMULATE_SCALAR_ACCUMULATOR_READ)
-#define L_NAME "Iconoclast's SP Interpreter (debug)"
-#else
 #define L_NAME "Iconoclast's SP Interpreter"
-#endif
+
+static unsigned char conf[32];
+#define CFG_FILE    "rsp_conf.bin"
+/*
+ * The name of the config file is subject to change.
+ * On InitiateRSP, plugin checks if a file named after the game code in the
+ * ROM header of the loaded ROM exists.  If so, load the settings per-ROM.
+ */
+
+#define CFG_HLE         (conf[0x00])
+#define CFG_HLE_GFX     ((CFG_HLE >> 0) & 1)
+#define CFG_HLE_AUD     ((CFG_HLE >> 1) & 1)
+#define CFG_HLE_VID     ((CFG_HLE >> 2) & 1) /* reserved/unused */
+#define CFG_HLE_JPG     ((CFG_HLE >> 3) & 1) /* reserved/unused */
+#define CFG_HLE_005     (0) /* I have no idea what (OSTask.type == 5) is. */
+#define CFG_HLE_HVQ     ((CFG_HLE >> 5) & 1) /* reserved/unused */
+#define CFG_HLE_HVQM    ((CFG_HLE >> 6) & 1) /* reserved/unused */
+#define CFG_HLE_UNK     ((CFG_HLE >> 7) & 1) /* anything else, reserved */
+/*
+ * Most of the point behind this config system is to let users use HLE video
+ * or audio plugins.  The other task types are used less than 1% of the time
+ * and only in a few games.  They require simulation from within the RSP
+ * internally, which I have no intention to ever support.  Some good research
+ * on a few of these special task types was done by Hacktarux in the MUPEN64
+ * HLE RSP plugin, so consider using that instead for complete HLE.
+ */
+
+/*
+ * Anything between 0x01 and 0x0F of the config file, I have not yet found a
+ * use for.  That section of bits is currently all reserved for new settings.
+ */
+
+#define CFG_WAIT_FOR_CPU_HOST       (*(int *)(conf + 0x10))
+#define CFG_MEND_SEMAPHORE_LOCK     (*(int *)(conf + 0x14))
+#define CFG_RESERVED                (*(int *)(conf + 0x18))
+#define CFG_CHECKSUM                (*(conf + 0x1F))

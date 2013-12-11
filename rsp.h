@@ -22,6 +22,7 @@
 
 #include "Rsp_#1.1.h"
 RSP_INFO RSP;
+
 #ifdef _MSC_VER
 #define INLINE __inline
 INLINE int MessageBoxA(
@@ -57,26 +58,69 @@ int MessageBoxA(void *hwnd,
 }
 #endif
 /* No need to import the Windows API, just a message trace function. */
+const unsigned int type_index[4] = {
+    0x00000000, /* no icon or effect `MB_OK`, for O.K. encounters */
+    0x00000020, /* MB_ICONQUESTION -- curious situation in emulator */
+    0x00000030, /* MB_ICONEXCLAMATION -- might be missing RSP support */
+    0x00000010  /* MB_ICONHAND -- definite error or problem in emulator */
+};
 void message(char *body, int priority)
 {
-    const unsigned int type_index[4] = {
-        0x00000000, /* no icon or effect `MB_OK`, for O.K. encounters */
-        0x00000020, /* MB_ICONQUESTION -- curious situation in emulator */
-        0x00000030, /* MB_ICONEXCLAMATION -- might be missing RSP support */
-        0x00000010  /* MB_ICONHAND -- definite error or problem in emulator */
-    };
-
     priority &= 03;
-    switch (MINIMUM_MESSAGE_PRIORITY)
-    { /* exit table for voiding messages of lower priority */
-        default:  return;
-        case 03:  if (priority < MINIMUM_MESSAGE_PRIORITY) return;
-        case 02:  if (priority < MINIMUM_MESSAGE_PRIORITY) return;
-        case 01:  if (priority < MINIMUM_MESSAGE_PRIORITY) return;
-        case 00:  break;
-    }
+    if (priority < MINIMUM_MESSAGE_PRIORITY)
+        return;
     MessageBoxA(NULL, body, NULL, type_index[priority]);
     return;
+}
+#endif
+
+#if !defined(M64P_PLUGIN_API)
+void update_conf(void)
+{
+    FILE* stream;
+    unsigned char checksum;
+    register int i, test;
+
+    stream = fopen(CFG_FILE, "rb");
+    if (stream == NULL)
+    { /* try GetModulePath or whatever to correct the path? */
+        message("Failed to read config.", 3);
+        return;
+    }
+    for (i = 0; i < 32; i++)
+    {
+        test = fgetc(stream);
+        conf[i] = (unsigned char)(test);
+    }
+    /* my own little checksum code, not really useful :P */
+    checksum = 0x00000000;
+    for (i = 0; i < 31; i++)
+        checksum = checksum
+                 + !!(conf[i] & 0x80)
+                 + !!(conf[i] & 0x40)
+                 + !!(conf[i] & 0x20)
+                 + !!(conf[i] & 0x10)
+                 + !!(conf[i] & 0x08)
+                 + !!(conf[i] & 0x04)
+                 + !!(conf[i] & 0x02)
+                 + !!(conf[i] & 0x01);
+    if (checksum != CFG_CHECKSUM)
+    {
+        message("Checksum mismatch.", 3);
+        memset(conf, 0x00, 32);
+        return;
+    }
+    return;
+}
+#else
+void update_conf(void)
+{
+    memset(conf, 0, sizeof(conf));
+#if defined(M64P_HLEVIDEO)
+    CFG_HLE = 1;
+#else
+    CFG_HLE = 0;
+#endif
 }
 #endif
 
