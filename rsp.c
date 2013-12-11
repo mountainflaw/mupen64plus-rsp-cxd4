@@ -25,6 +25,7 @@
 #include <string.h>
 #include "Rsp_#1.1.h"
 #include "rsp.h"
+#include "bench.h"
 
 #define RSP_CXD4_VERSION 0x0101
 
