@@ -19,30 +19,6 @@
 
 #include "vu.h"
 
-static void VEQ(int vd, int vs, int vt, int e)
-{
-    int eq; /* equal, unless (NOTEQUAL) */
-    register unsigned char VCO_VCE;
-    register int i;
-
-    VCC = 0x0000;
-    VCO_VCE = ~(unsigned char)(VCO >> 8);
-    for (i = 0; i < N; i++)
-    {
-        const signed short VS = VR[vs][i];
-        const signed short VT = VR_T(i);
-
-        eq  = (VCO_VCE >> i) & 0x01;
-        eq &= (VS == VT);
-        VCC |= eq <<= i;
-        ACC_R(i) = VT; /* More accurately, `ACC_R(i) = eq ? VS : VT`. */
-    }
-    for (i = 0; i < N; i++)
-        ACC_W(i) = ACC_R(i);
-    VCO = 0x0000;
-    return;
-}
-
 void do_eq(int vs)
 {
     int eq[8];
@@ -61,10 +37,10 @@ void do_eq(int vs)
         VCC |=     0 << (i + 0x8);
 #if (0)
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = eq[i] ? VR[vs][i] : VC[i]; /* correct but redundant */
+        ACC_L(i) = eq[i] ? VR[vs][i] : VC[i]; /* correct but redundant */
 #else
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = VC[i];
+        ACC_L(i) = VC[i];
 #endif
     return;
 }
@@ -80,7 +56,7 @@ static void VEQ_v(void)
         VC[i] = VR[vt][i];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ0q(void)
@@ -94,7 +70,7 @@ static void VEQ0q(void)
         VC[i] = VR[vt][(0x2 & 01) + (i & 0xE)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ1q(void)
@@ -108,7 +84,7 @@ static void VEQ1q(void)
         VC[i] = VR[vt][(0x3 & 01) + (i & 0xE)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ0h(void)
@@ -122,7 +98,7 @@ static void VEQ0h(void)
         VC[i] = VR[vt][(0x4 & 03) + (i & 0xC)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ1h(void)
@@ -136,7 +112,7 @@ static void VEQ1h(void)
         VC[i] = VR[vt][(0x5 & 03) + (i & 0xC)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ2h(void)
@@ -150,7 +126,7 @@ static void VEQ2h(void)
         VC[i] = VR[vt][(0x6 & 03) + (i & 0xC)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ3h(void)
@@ -164,7 +140,7 @@ static void VEQ3h(void)
         VC[i] = VR[vt][(0x7 & 03) + (i & 0xC)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ0w(void)
@@ -178,7 +154,7 @@ static void VEQ0w(void)
         VC[i] = VR[vt][(0x8 & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ1w(void)
@@ -192,7 +168,7 @@ static void VEQ1w(void)
         VC[i] = VR[vt][(0x9 & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ2w(void)
@@ -206,7 +182,7 @@ static void VEQ2w(void)
         VC[i] = VR[vt][(0xA & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ3w(void)
@@ -220,7 +196,7 @@ static void VEQ3w(void)
         VC[i] = VR[vt][(0xB & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ4w(void)
@@ -234,7 +210,7 @@ static void VEQ4w(void)
         VC[i] = VR[vt][(0xC & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ5w(void)
@@ -248,7 +224,7 @@ static void VEQ5w(void)
         VC[i] = VR[vt][(0xD & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ6w(void)
@@ -262,7 +238,7 @@ static void VEQ6w(void)
         VC[i] = VR[vt][(0xE & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }
 static void VEQ7w(void)
@@ -276,6 +252,6 @@ static void VEQ7w(void)
         VC[i] = VR[vt][(0xF & 07) + (i & 0x0)];
     do_eq(vs);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     return;
 }

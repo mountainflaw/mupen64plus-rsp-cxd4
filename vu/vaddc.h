@@ -19,22 +19,6 @@
 
 #include "vu.h"
 
-static void VADDC(int vd, int vs, int vt, int e)
-{
-    register int i;
-
-    VCO = 0x0000;
-    for (i = 0; i < N; i++)
-        result[i] = (unsigned short)VR[vs][i] + (unsigned short)VR_T(i);
-    for (i = 0; i < N; i++)
-        ACC_R(i) = (short)result[i];
-    for (i = 0; i < N; i++)
-        VCO |= !!(result[i] & ~0x0000FFFF) << i;
-    for (i = 0; i < N; i++)
-        ACC_W(i) = ACC_R(i);
-    return;
-}
-
 #if (0)
 #define SETCO(i)    (result[i] > 0x0000FFFF)
 #elif (1)
@@ -73,9 +57,9 @@ static void VADDC_v(void)
     for (i = 0; i < N; i++)
         result[i] = (unsigned short)(VR[vs][i]) + (unsigned short)(VR[vt][i]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -91,9 +75,9 @@ static void VADDC0q(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x2 & 01) + (i & 0xE)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -109,9 +93,9 @@ static void VADDC1q(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x3 & 01) + (i & 0xE)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -127,9 +111,9 @@ static void VADDC0h(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x4 & 03) + (i & 0xC)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -145,9 +129,9 @@ static void VADDC1h(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x5 & 03) + (i & 0xC)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -163,9 +147,9 @@ static void VADDC2h(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x6 & 03) + (i & 0xC)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -181,9 +165,9 @@ static void VADDC3h(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x7 & 03) + (i & 0xC)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -199,9 +183,9 @@ static void VADDC0w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x8 & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -217,9 +201,9 @@ static void VADDC1w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0x9 & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -235,9 +219,9 @@ static void VADDC2w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0xA & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -253,9 +237,9 @@ static void VADDC3w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0xB & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -271,9 +255,9 @@ static void VADDC4w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0xC & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -289,9 +273,9 @@ static void VADDC5w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0xD & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -307,9 +291,9 @@ static void VADDC6w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0xE & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }
@@ -325,9 +309,9 @@ static void VADDC7w(void)
             (unsigned short)(VR[vs][i])
           + (unsigned short)(VR[vt][(0xF & 07) + (i & 0x0)]);
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     for (i = 0; i < N; i++)
-        VR[vd][i] = VACC[i].s[LO];
+        VR[vd][i] = ACC_L(i);
     set_co();
     return;
 }

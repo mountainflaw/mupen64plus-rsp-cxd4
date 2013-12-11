@@ -19,24 +19,6 @@
 
 #include "vu.h"
 
-static void VSUB(int vd, int vs, int vt, int e)
-{
-    register int i;
-
-    for (i = 0; i < N; i++) /* Try to vectorize the subtracts to be parallel. */
-        result[i] = VR[vs][i] - VR_T(i);
-    for (i = 0; i < N; i++)
-    {
-        result[i] -= VCO & 0x0001;
-        VCO >>= 1;
-    }
-    VCO = 0x0000; /* Clear the remaining, upper NOTEQUAL bits. */
-    for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)result[i];
-    SIGNED_CLAMP(VMUL_PTR, SM_ADD_A);
-    return;
-}
-
 void clr_bi(void) /* clear CARRY and borrow in to accumulators */
 {
     int bi[8];
@@ -60,7 +42,7 @@ static void VSUB_v(void)
         result[i] = VR[vs][i] - VR[vt][i];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -75,7 +57,7 @@ static void VSUB0q(void)
         result[i] = VR[vs][i] - VR[vt][(0x2 & 01) + (i & 0xE)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -90,7 +72,7 @@ static void VSUB1q(void)
         result[i] = VR[vs][i] - VR[vt][(0x3 & 01) + (i & 0xE)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -105,7 +87,7 @@ static void VSUB0h(void)
         result[i] = VR[vs][i] - VR[vt][(0x4 & 03) + (i & 0xC)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -120,7 +102,7 @@ static void VSUB1h(void)
         result[i] = VR[vs][i] - VR[vt][(0x5 & 03) + (i & 0xC)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -135,7 +117,7 @@ static void VSUB2h(void)
         result[i] = VR[vs][i] - VR[vt][(0x6 & 03) + (i & 0xC)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -150,7 +132,7 @@ static void VSUB3h(void)
         result[i] = VR[vs][i] - VR[vt][(0x7 & 03) + (i & 0xC)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -165,7 +147,7 @@ static void VSUB0w(void)
         result[i] = VR[vs][i] - VR[vt][(0x8 & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -180,7 +162,7 @@ static void VSUB1w(void)
         result[i] = VR[vs][i] - VR[vt][(0x9 & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -195,7 +177,7 @@ static void VSUB2w(void)
         result[i] = VR[vs][i] - VR[vt][(0xA & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -210,7 +192,7 @@ static void VSUB3w(void)
         result[i] = VR[vs][i] - VR[vt][(0xB & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -225,7 +207,7 @@ static void VSUB4w(void)
         result[i] = VR[vs][i] - VR[vt][(0xC & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -240,7 +222,7 @@ static void VSUB5w(void)
         result[i] = VR[vs][i] - VR[vt][(0xD & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -255,7 +237,7 @@ static void VSUB6w(void)
         result[i] = VR[vs][i] - VR[vt][(0xE & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
@@ -270,7 +252,7 @@ static void VSUB7w(void)
         result[i] = VR[vs][i] - VR[vt][(0xF & 07) + (i & 0x0)];
     clr_bi();
     for (i = 0; i < N; i++)
-        VACC[i].s[LO] = (short)(result[i]);
+        ACC_L(i) = (short)(result[i]);
     SIGNED_CLAMP(VR[vd], SM_ADD_A);
     return;
 }
