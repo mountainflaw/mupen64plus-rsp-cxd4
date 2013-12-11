@@ -21,7 +21,7 @@
 
 void do_ch(int vs)
 {
-    int eq[8], neq[8], vce[8];
+    int eq[8], neq[8];
     int ge[8], le[8];
     signed short sn[8];
     register int i;
@@ -59,9 +59,6 @@ void do_ch(int vs)
     VCO = 0x0000;
     for (i = 0; i < N; i++)
         VCO |= neq[i]<<(i + 0x8) | sn[i]<<(i + 0x0);
-    VCE = 0x00;
-    for (i = 0; i < N; i++)
-        VCE |= vce[i] << i;
     return;
 }
 
