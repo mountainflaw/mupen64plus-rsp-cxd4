@@ -100,13 +100,16 @@ NOINLINE void message(const char* body, int priority)
 #endif
 
 #if !defined(M64P_PLUGIN_API)
-void update_conf(void)
+/*
+ * Update RSP configuration memory from local file resource.
+ */
+void update_conf(const char* source)
 {
     FILE* stream;
     unsigned char checksum;
     register int i, test;
 
-    stream = fopen(CFG_FILE, "rb");
+    stream = fopen(source, "rb");
     if (stream == NULL)
     { /* try GetModulePath or whatever to correct the path? */
         message("Failed to read config.", 3);
@@ -138,7 +141,7 @@ void update_conf(void)
     return;
 }
 #else
-void update_conf(void)
+void update_conf(const char* source)
 {
     memset(conf, 0, sizeof(conf));
 #if defined(M64P_HLEVIDEO)

@@ -39,7 +39,6 @@ EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Con
         return M64ERR_ALREADY_INIT;
 
     l_PluginInit = 1;
-    update_conf();
     return M64ERR_SUCCESS;
 }
 
@@ -80,7 +79,7 @@ EXPORT int CALL RomOpen(void)
     if (!l_PluginInit)
         return 0;
 
-    update_conf();
+    update_conf(CFG_FILE);
     return 1;
 }
 #endif
@@ -120,18 +119,9 @@ EXPORT void CALL DllConfig(HWND hParent)
 #else
 EXPORT void CALL DllConfig(HWND hParent)
 {
-    FILE* test;
-    int cond;
-
     hParent = NULL;
-    test = fopen("sp_cfgui.exe", "rb");
-    cond = (test == NULL);
-    fclose(test);
-    if (cond)
-        system("../../sp_cfgui.exe"); /* bug in Project64 2.x */
-    else
-        system("sp_cfgui.exe");
-    update_conf();
+    system("sp_cfgui");
+    update_conf(CFG_FILE);
     return;
 }
 #endif
@@ -199,9 +189,8 @@ EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
         *CycleCount = 0x00000000;
     RSP = Rsp_Info;
     *RSP.SP_PC_REG = 0x04001000 & ~0x00000FFF;
-#ifdef SP_EXECUTE_LOG
-    output_log = fopen("simd_log.bin", "ab");
-#endif
+
+    update_conf(CFG_FILE);
     if (RSP.DMEM == RSP.IMEM) /* usually dummy RSP data, not to start ROM */
         return; /* DMA is not executed just because plugin initiates. */
     else

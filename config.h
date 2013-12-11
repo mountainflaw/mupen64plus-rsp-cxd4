@@ -17,15 +17,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/* DLL configurator control head by Iconoclast
- *
- * Macro controls over RSP virtualization behaviors are all switched here.
- * There is no GUI to config such as zilmar's `DllConfig` export because
- * obviously such run-time checks slow down the emulation by checking the
- * configurations per billions of opcode iterations.  Anyone can add a WINGUI
- * config if they like, but I doubt that the performance impact is worth it.
- */
-
 #define _CRT_SECURE_NO_WARNINGS
 /* This is only here for people using modern Microsoft compilers.
  * Usually the default warning level complains over "deprecated" CRT methods.
@@ -42,6 +33,7 @@
 #if (0)
 #define SP_EXECUTE_LOG
 #define VU_EMULATE_SCALAR_ACCUMULATOR_READ
+#define SSE2_SHUFFLE_JUMP_DIMENSION
 #endif
 
 const char* DLL_name = "Iconoclast's SP Interpreter";
