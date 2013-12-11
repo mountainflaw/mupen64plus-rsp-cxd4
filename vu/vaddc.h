@@ -21,7 +21,6 @@
 
 static void VADDC(int vd, int vs, int vt, int e)
 {
-    unsigned int result[8];
     register int i;
 
     VCO = 0x0000;
