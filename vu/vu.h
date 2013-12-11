@@ -210,10 +210,6 @@ static signed short sclamp[2][2] = {
     { 0x0000, -0x8000},
     {+0x7FFF,  0x0000}
 };
-static unsigned short zclamp[2][2] = {
-    { 0x0000, -0x0000},
-    {+0xFFFF,  0x0000}
-};
 
 INLINE void SIGNED_CLAMP(short* VD, int mode)
 {
