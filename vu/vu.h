@@ -168,6 +168,8 @@ void SHUFFLE_VECTOR(int vt, int e)
     return;
 }
 
+typedef long long INT64;
+
 /*
  * accumulator-indexing macros
  */
