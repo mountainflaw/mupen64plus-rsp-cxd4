@@ -2897,7 +2897,6 @@ const int sub_op_table[64] = {
     OFF_OPCODE,
     OFF_OPCODE,
     OFF_OPCODE,
-    OFF_OPCODE,
     OFF_RT, /* LB */
     OFF_RT, /* LH */
     OFF_OPCODE,
@@ -2910,6 +2909,7 @@ const int sub_op_table[64] = {
     OFF_OPCODE, /* SH */
     OFF_OPCODE,
     OFF_OPCODE, /* SW */
+    OFF_OPCODE,
     OFF_OPCODE,
     OFF_OPCODE,
     OFF_OPCODE,
