@@ -20,7 +20,7 @@
 #include "Rsp_#1.1.h"
 #include "rsp.h"
 
-#include "su/su.h"
+#include "su.h"
 #include "vu/vu.h"
 #include "matrix.h"
 
