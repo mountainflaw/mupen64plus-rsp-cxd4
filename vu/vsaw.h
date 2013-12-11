@@ -57,7 +57,7 @@ static void VSAW(void)
     const int vd = inst.R.sa;
     const int e  = (inst.R.rs & 0xF) ^ 0x8; /* &= 7 */
 
-    if (e > 2)
+    if (e > 0x2)
     {
         register int i;
 
@@ -67,27 +67,5 @@ static void VSAW(void)
         return;
     }
     vector_copy(VR[vd], VACC[e]);
-    return;
-}
-
-static void VSAWH(void)
-{
-    const int vd = inst.R.sa;
-
-    vector_copy(VR[vd], VACC_H);
-    return;
-}
-static void VSAWM(void)
-{
-    const int vd = inst.R.sa;
-
-    vector_copy(VR[vd], VACC_M);
-    return;
-}
-static void VSAWL(void)
-{
-    const int vd = inst.R.sa;
-
-    vector_copy(VR[vd], VACC_L);
     return;
 }
