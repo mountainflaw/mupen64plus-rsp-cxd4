@@ -2191,7 +2191,7 @@ static void LWA(void)
         ULW(rt, addr); /* Address Error exception:  RSP bypass MIPS pseudo-op */
         return;
     }
-    SR[rt] = *(long *)(RSP.DMEM + addr);
+    SR[rt] = *(int32_t *)(RSP.DMEM + addr);
     SR[0] = 0x00000000;
     return;
 }
@@ -2261,7 +2261,7 @@ static void SWA(void)
         USW(rt, addr); /* Address Error exception:  RSP bypass MIPS pseudo-op */
         return;
     }
-    *(long *)(RSP.DMEM + addr) = SR[rt];
+    *(int32_t *)(RSP.DMEM + addr) = SR[rt];
     return;
 }
 
