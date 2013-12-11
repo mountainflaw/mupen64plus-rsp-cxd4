@@ -87,7 +87,7 @@ EXPORT int CALL RomOpen(void)
 
 EXPORT void CALL CloseDLL(void)
 {
-    RomClosed();
+    RSP.RDRAM = NULL; /* so DllTest benchmark doesn't think ROM is still open */
     return;
 }
 static const char DLL_about[] =
@@ -199,7 +199,6 @@ EXPORT void CALL InitiateRSPDebugger(DEBUG_INFO DebugInfo)
 }
 EXPORT void CALL RomClosed(void)
 {
-    RSP.RDRAM = NULL; /* so DllTest benchmark doesn't think ROM is still open */
     *RSP.SP_PC_REG = 0x00000000;
     return;
 }
