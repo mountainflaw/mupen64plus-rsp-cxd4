@@ -20,7 +20,7 @@
 /******************************************************************************\
 * Project:  MSP Emulation Layer for Vector Unit Computational Operations       *
 * Authors:  Iconoclast                                                         *
-* Release:  2013.10.10                                                         *
+* Release:  2013.10.11                                                         *
 * License:  none (public domain)                                               *
 \******************************************************************************/
 #ifndef _VU_H
@@ -38,7 +38,6 @@
  * This is amended by using the `VU_S` and `VU_B` macros defined in `rsp.h`.
  */
 ALIGNED short VR[32][N];
-ALIGNED short ST[N]; /* shuffled scalar-decoded target paired source */
 
 /*
  * accumulator-indexing macros (inverted access dimensions, suited for SSE)
