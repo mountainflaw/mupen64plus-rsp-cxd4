@@ -23,7 +23,6 @@ INLINE static void do_ge(short* VD, short* VS, short* VT)
 {
     short ce[N];
     short eq[N];
-    short diff[N];
     register int i;
 
     for (i = 0; i < N; i++)
@@ -39,10 +38,7 @@ INLINE static void do_ge(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         comp[i] = comp[i] | eq[i]; /* ... or equal (commonly) */
 
-    for (i = 0; i < N; i++)
-        diff[i] = VS[i] - VT[i];
-    for (i = 0; i < N; i++)
-        VACC_L[i] = VT[i] + comp[i]*diff[i];
+    merge(VACC_L, comp, VS, VT);
     for (i = 0; i < N; i++)
         VD[i] = VACC_L[i];
     for (i = 0; i < N; i++)
