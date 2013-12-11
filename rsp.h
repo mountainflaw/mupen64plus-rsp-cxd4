@@ -23,7 +23,8 @@
 #include "Rsp_#1.1.h"
 RSP_INFO RSP;
 #ifdef _MSC_VER
-inline int MessageBoxA(
+#define INLINE __inline
+INLINE int MessageBoxA(
     HWND hWnd, const char *lpText, const char *lpCaption, unsigned int uType)
 {
     uType = 0x00000000;
@@ -31,13 +32,14 @@ inline int MessageBoxA(
         hWnd = NULL;
     return (0);
 } /* not going to maintain message boxes on the Microsoft compilers */
-inline void message(char *body, int priority)
+INLINE void message(char *body, int priority)
 {
     priority ^= priority;
     *(body + 0) = '\0';
     return; /* Why?  Because I am keeping Win32-only builds dependency-free. */
 } /* The primary target is GNU/GCC (cross-OS portability, free of APIs). */
 #else
+#define INLINE inline
 #if defined(WIN32)
 __declspec(dllimport) int __stdcall MessageBoxA(
     HWND hWnd,
@@ -115,6 +117,21 @@ static int MFC0_count[32];
 /* The VR_S macro above is more stable but slower.
  * In some cases, we may as well adjust the elemental offset, if it is odd.
  * If this is made flexible in advance, we can just use this macro to finish.
+ */
+
+#define SR_B(s, i) (*(unsigned char *)(((unsigned char *)(SR+s)) + i))
+#define SR_S(s, i) (*(short *)(((unsigned char *)(SR+s)) + HES(i)))
+
+#if (0)
+#define MASK_SA(sa) (sa & 31) /* Force masking in software. */
+#else
+#define MASK_SA(sa) (sa) /* Let hardware architecture do the mask for us. */
+#endif
+/* This optimization only works for shift amounts on variable data.
+ * Its only use so far is simplifying SLL, SRL, SRA, SLLV, SRLV, and SRAV.
+ *
+ * Basically, Intel and MIPS versions here are both 32 bits, so they ignore
+ * any upper bits of shift amounts past 0b11111 (31 dec) as reserved.
  */
 
 #include "su/su.h"

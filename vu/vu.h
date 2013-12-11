@@ -20,7 +20,7 @@
 /******************************************************************************\
 * Project:  MSP Emulation Layer for Vector Unit Computational Operations       *
 * Authors:  Iconoclast                                                         *
-* Release:  2013.05.15                                                         *
+* Release:  2013.08.08                                                         *
 * License:  none (public domain)                                               *
 \******************************************************************************/
 #ifndef _VU_H
@@ -93,9 +93,6 @@ static short VC[8]; /* vector/scalar coefficient */
  * (partially scalar coefficient) vector register as necessary so that
  * the elements `i`(0..7) of VS can directly match up with 1:1
  * parallelism to the short elements `i`(0..7) of the shuffled VT.
- *
- * Be careful when compiling this with GCC or SSE vector support, as the
- * compiler may produce unstable results that can crash in some opcodes.
  */
 
 #ifdef EMULATE_VECTOR_RESULT_BUFFER
@@ -142,7 +139,7 @@ int sub_mask[16] = {
     0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7
 };
 
-inline void SHUFFLE_VECTOR(int vt, int e)
+INLINE void SHUFFLE_VECTOR(int vt, int e)
 {
     register int i, j;
 #if (0 == 0)
@@ -208,44 +205,62 @@ static union ACC {
  * This algorithm might have a bug if you invoke shifts greater than 16,
  * because the 48-bit acc needs to be sign-extended when shifting right here.
  */
+#define FORCE_STATIC_CLAMP
+static signed short sclamp[2][2] = {
+    { 0x0000, -0x8000},
+    {+0x7FFF,  0x0000}
+};
+static unsigned short zclamp[2][2] = {
+    { 0x0000, -0x0000},
+    {+0xFFFF,  0x0000}
+};
 
-inline void SIGNED_CLAMP(short* VD, int mode)
+INLINE void SIGNED_CLAMP(short* VD, int mode)
 {
     register int i;
 
     switch (mode)
     {
+        register signed int result;
+
         case 0: /* typical sign-clamp of accumulator-mid (bits 31:16) */
             for (i = 0; i < 8; i++)
-                if (VACC[i].DW & 0x800000000000)
-                    if ((VACC[i].DW & 0xFFFF80000000) != 0xFFFF80000000)
-                        VD[i] = -32768;
-                    else
-                        VD[i] = VACC[i].s[MD];
-                else
-                    if ((VACC[i].DW & 0xFFFF80000000) != 0x000000000000)
-                        VD[i] = +32767;
-                    else
-                        VD[i] = VACC[i].s[MD];
+            {
+                result = *(signed int *)((unsigned char *)(VACC + i) + 2);
+#ifdef FORCE_STATIC_CLAMP
+                VD[i]  = result & 0x0000FFFF;
+                VD[i] &= ~(result - -32768) >> 31; /* min:  0x8000 ^ 0x8000 */
+                VD[i] |=  (+32767 - result) >> 31; /* max:  0x7FFF ^ 0x8000 */
+                VD[i] ^= 0x8000 & ((result + 32768)>>31 | (32767 - result)>>31);
+#else
+                VD[i] = (result < -32768)
+                      ? -32768 : (result > +32767)
+                      ? +32767
+                      : result & 0x0000FFFF;
+#endif
+            }
             return;
         case 1: /* sign-clamp accumulator-low (bits 15:0) */
             for (i = 0; i < 8; i++)
-                if (VACC[i].DW & 0x800000000000)
-                    if ((VACC[i].DW & 0xFFFF80000000) != 0xFFFF80000000)
-                        VD[i] = 0;
-                    else
-                        VD[i] = VACC[i].s[LO];
-                else
-                    if ((VACC[i].DW & 0xFFFF80000000) != 0x000000000000)
-                        VD[i] = ~0;
-                    else
-                        VD[i] = VACC[i].s[LO];
+            {
+                result = *(signed int *)((unsigned char *)(VACC + i) + 2);
+#ifdef FORCE_STATIC_CLAMP
+                VD[i]  = VACC[i].DW & 0x00000000FFFF;
+                VD[i] &= ~(result - -32768) >> 31;
+                VD[i] |=  (+32767 - result) >> 31;
+                continue;
+#else
+                VD[i] = (result < -32768)
+                      ? 0x0000 : (result > +32767)
+                      ? 0xFFFF
+                      : VACC[i].s[LO];
+#endif
+            }
             return;
         case 2: /* oddified sign-clamp employed by VMACQ and VMULQ */
             for (i = 0; i < 8; i++)
             {
-                register const signed int result = CLAMP_BASE(i, 17);
-
+                result = CLAMP_BASE(i, 17);
                 if (result < -32768)
                     VD[i] = -32768 & ~0x000F;
                 else if (result > +32767)
