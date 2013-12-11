@@ -104,7 +104,7 @@ NOINLINE void update_conf(const char* source)
         {
             test = fgetc(stream);
             if (test < 0) /* either EOF or invalid ASCII characters */
-                return;
+                break;
             line[i] = (char)(test);
             if (line[i] == '\n')
                 break;
@@ -126,6 +126,7 @@ NOINLINE void update_conf(const char* source)
         else if (strcmp(key, "SupportCPUSemaphoreLock") == 0)
             CFG_MEND_SEMAPHORE_LOCK = bvalue;
     } while (test != EOF);
+    fclose(stream);
     return;
 }
 #else
