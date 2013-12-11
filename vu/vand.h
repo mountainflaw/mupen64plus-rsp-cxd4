@@ -29,6 +29,15 @@ INLINE void do_and(short* VD, short* VS, short* VT)
     return;
 }
 
+static void VAND(void)
+{
+    const int vd = inst.R.sa;
+    const int vs = inst.R.rd;
+
+    do_and(VR[vd], VR[vs], ST);
+    return;
+}
+
 static void VAND_v(void)
 {
     const int vd = inst.R.sa;

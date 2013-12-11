@@ -19,7 +19,7 @@
 
 #include "vu.h"
 
-INLINE void do_mulf(short* VD, short* VS, short* VT)
+INLINE static void do_mulf(short* VD, short* VS, short* VT)
 {
     long acc[N];
     register int i;
@@ -38,6 +38,15 @@ INLINE void do_mulf(short* VD, short* VS, short* VT)
         VD[i] = ACC_M(i);
     for (i = 0; i < N; i++)
         VD[i] = VD[i] - !!(VD[i] & 0x8000); /* only possible product to clamp */
+    return;
+}
+
+static void VMULF(void)
+{
+    const int vd = inst.R.sa;
+    const int vs = inst.R.rd;
+
+    do_mulf(VR[vd], VR[vs], ST);
     return;
 }
 

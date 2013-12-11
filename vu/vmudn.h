@@ -19,7 +19,7 @@
 
 #include "vu.h"
 
-INLINE void do_mudn(short* VD, short* VS, short* VT)
+INLINE static void do_mudn(short* VD, short* VS, short* VT)
 {
     long acc[N];
     register int i;
@@ -34,6 +34,15 @@ INLINE void do_mudn(short* VD, short* VS, short* VT)
         ACC_H(i) = -(ACC_M(i) < 0); /* internal sign-extended shift */
     for (i = 0; i < N; i++)
         VD[i] = ACC_L(i); /* no possibilities to clamp */
+    return;
+}
+
+static void VMUDN(void)
+{
+    const int vd = inst.R.sa;
+    const int vs = inst.R.rd;
+
+    do_mudn(VR[vd], VR[vs], ST);
     return;
 }
 

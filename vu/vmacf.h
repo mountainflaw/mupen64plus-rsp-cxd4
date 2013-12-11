@@ -19,7 +19,7 @@
 
 #include "vu.h"
 
-INLINE void do_macf(short* VD, short* VS, short* VT)
+INLINE static void do_macf(short* VD, short* VS, short* VT)
 {
     long product[N];
     unsigned long addend[N];
@@ -48,6 +48,15 @@ INLINE void do_macf(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         ACC_H(i) = (short)(result[i] >> 16);
     SIGNED_CLAMP(VD, SM_MUL_X);
+    return;
+}
+
+static void VMACF(void)
+{
+    const int vd = inst.R.sa;
+    const int vs = inst.R.rd;
+
+    do_macf(VR[vd], VR[vs], ST);
     return;
 }
 

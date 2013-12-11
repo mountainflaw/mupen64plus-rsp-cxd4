@@ -19,7 +19,7 @@
 
 #include "vu.h"
 
-INLINE void UNSIGNED_CLAMP(short* VD)
+INLINE static void UNSIGNED_CLAMP(short* VD)
 {
     short hi[N], lo[N];
     register int i;
@@ -37,7 +37,7 @@ INLINE void UNSIGNED_CLAMP(short* VD)
     return;
 }
 
-INLINE void do_macu(short* VD, short* VS, short* VT)
+INLINE static void do_macu(short* VD, short* VS, short* VT)
 {
     long product[N];
     unsigned long addend[N];
@@ -66,6 +66,15 @@ INLINE void do_macu(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         ACC_H(i) = (short)(result[i] >> 16);
     UNSIGNED_CLAMP(VD);
+    return;
+}
+
+static void VMACU(void)
+{
+    const int vd = inst.R.sa;
+    const int vs = inst.R.rd;
+
+    do_macu(VR[vd], VR[vs], ST);
     return;
 }
 
