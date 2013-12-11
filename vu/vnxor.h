@@ -19,198 +19,176 @@
 
 #include "vu.h"
 
-static void VNXOR_v(void)
+INLINE void do_nxor(short* VD, short* VS, short* VT)
 {
     register int i;
+
+    for (i = 0; i < N; i++)
+        ACC_L(i) = ~(VS[i] ^ VT[i]);
+    memcpy(VD, VACC_L, N*sizeof(short));
+    return;
+}
+
+static void VNXOR_v(void)
+{
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    do_nxor(VR[vd], VR[vs], VR[vt]);
     return;
 }
 static void VNXOR0q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x2 & 01) + (i & 0xE)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x2);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR1q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x3 & 01) + (i & 0xE)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x3);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR0h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x4 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x4);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR1h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x5 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x5);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR2h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x6 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x6);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR3h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x7 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x7);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR0w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x8 & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x8);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR1w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0x9 & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x9);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR2w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0xA & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xA);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR3w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0xB & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xB);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR4w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0xC & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xC);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR5w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0xD & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xD);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR6w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0xE & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xE);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }
 static void VNXOR7w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = ~(VR[vs][i] ^ VR[vt][(0xF & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xF);
+    do_nxor(VR[vd], VR[vs], SV);
     return;
 }

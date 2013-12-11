@@ -19,15 +19,17 @@
 
 #include "vu.h"
 
-void do_cl(int vs)
+void do_cl(short* VD, short* VS, short* VT)
 {
     int eq[N];
     int ge[N], le[N];
     int lz[N], uz[N];
     int dif[N], gen[N], len[N]; /* temporaries for computing flag corrections */
+    short VC[N];
     signed short sn[N];
     register int i;
 
+    memcpy(VC, VT, N*sizeof(short));
     for (i = 0; i < N; i++)
         ge[i] = clip[i];
     for (i = 0; i < N; i++)
@@ -46,7 +48,7 @@ void do_cl(int vs)
     for (i = 0; i < N; i++)
         VC[i] = VC[i] - sn[i]; /* conditional negation, if sn */
     for (i = 0; i < N; i++)
-        dif[i] = VR[vs][i] - VC[i]; /* of course, if sn, VS + VT, not VS - VT */
+        dif[i] = VS[i] - VC[i]; /* of course, if sn, VS + VT, not VS - VT */
     for (i = 0; i < N; i++)
         lz[i] = !(dif[i] &  0x0000FFFF);
     for (i = 0; i < N; i++)
@@ -72,12 +74,13 @@ void do_cl(int vs)
     for (i = 0; i < N; i++)
         eq[i] = sn[i] ? le[i] : ge[i];
     for (i = 0; i < N; i++)
-        ACC_L(i) = eq[i] ? VC[i] : VR[vs][i];
+        ACC_L(i) = eq[i] ? VC[i] : VS[i];
+    memcpy(VD, VACC_L, N*sizeof(short));
+
     for (i = 0; i < N; i++)
         clip[i] = ge[i];
     for (i = 0; i < N; i++)
         comp[i] = le[i];
-
     for (i = 0; i < N; i++)
         ne[i] = 0;
     for (i = 0; i < N; i++)
@@ -89,211 +92,164 @@ void do_cl(int vs)
 
 static void VCL_v(void)
 {
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][i];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    do_cl(VR[vd], VR[vs], VR[vt]);
     return;
 }
 static void VCL0q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x2 & 01) + (i & 0xE)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x2);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL1q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x3 & 01) + (i & 0xE)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x3);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL0h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x4 & 03) + (i & 0xC)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x4);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL1h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x5 & 03) + (i & 0xC)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x5);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL2h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x6 & 03) + (i & 0xC)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x6);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL3h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x7 & 03) + (i & 0xC)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x7);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL0w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x8 & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x8);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL1w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x9 & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x9);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL2w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xA & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xA);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL3w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xB & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xB);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL4w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xC & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xC);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL5w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xD & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xD);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL6w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xE & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xE);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }
 static void VCL7w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xF & 07) + (i & 0x0)];
-    do_cl(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xF);
+    do_cl(VR[vd], VR[vs], SV);
     return;
 }

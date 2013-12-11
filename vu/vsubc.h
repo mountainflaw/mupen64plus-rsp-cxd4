@@ -20,17 +20,24 @@
 #include "vu.h"
 
 #if (0)
-#define SETBI(i)    (result[i] < 0)
+#define SETBI(i)    (res[i] < 0)
 #else
-#define SETBI(i)    (!!(result[i] & 0x80000000))
+#define SETBI(i)    (!!(res[i] & 0x80000000))
 #endif
-#define SETNE(i)    (result[i] != 0)
+#define SETNE(i)    (res[i] != 0)
 
 #define BMASK(i)    ((i & 0x8) ? (ne[i-8] << i) : (bo[i-0] << i))
-void set_bo(void) /* set CARRY and borrow out from difference */
-{
+void set_bo(short* VD, short* VS, short* VT)
+{ /* set CARRY and borrow out from difference */
+    unsigned int res[N];
     register int i;
 
+    for (i = 0; i < N; i++)
+        res[i] = (unsigned short)(VS[i]) - (unsigned short)(VT[i]);
+    for (i = 0; i < N; i++)
+        ACC_L(i) = (short)(res[i]);
+    for (i = 0; i < N; i++)
+        VD[i] = ACC_L(i);
     for (i = 0; i < N; i++)
         ne[i] = SETNE(i);
     for (i = 0; i < N; i++)
@@ -39,269 +46,164 @@ void set_bo(void) /* set CARRY and borrow out from difference */
 }
 static void VSUBC_v(void)
 {
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = (unsigned short)(VR[vs][i]) - (unsigned short)(VR[vt][i]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    set_bo(VR[vd], VR[vs], VR[vt]);
     return;
 }
 static void VSUBC0q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x2 & 01) + (i & 0xE)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x2);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC1q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x3 & 01) + (i & 0xE)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x3);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC0h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x4 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x4);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC1h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x5 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x5);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC2h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x6 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x6);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC3h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x7 & 03) + (i & 0xC)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x7);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC0w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x8 & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x8);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC1w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0x9 & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0x9);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC2w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0xA & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0xA);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC3w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0xB & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0xB);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC4w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0xC & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0xC);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC5w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0xD & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0xD);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC6w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0xE & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0xE);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }
 static void VSUBC7w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] =
-            (unsigned short)(VR[vs][i])
-          - (unsigned short)(VR[vt][(0xF & 07) + (i & 0x0)]);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
-    set_bo();
+    SHUFFLE_VECTOR(SV, VR[vt], 0xF);
+    set_bo(VR[vd], VR[vs], SV);
     return;
 }

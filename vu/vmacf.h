@@ -44,9 +44,9 @@ INLINE void do_macf(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         ACC_M(i) = (short)addend[i];
     for (i = 0; i < N; i++)
-        addend[i] = (unsigned short)(addend[i] >> 16);
+        result[i] = (ACC_H(i) << 16) + addend[i];
     for (i = 0; i < N; i++)
-        ACC_H(i) = ACC_H(i) + (short)addend[i];
+        ACC_H(i) = (short)(result[i] >> 16);
     SIGNED_CLAMP(VD, SM_MUL_X);
     return;
 }
@@ -63,182 +63,154 @@ static void VMACF_v(void)
 static void VMACF0q(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x2 & 0x1) + (i & 0xE)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x2);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF1q(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x3 & 0x1) + (i & 0xE)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x3);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF0h(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x4 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x4);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF1h(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x5 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x5);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF2h(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x6 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x6);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF3h(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x7 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x7);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF0w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x8 & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x8);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF1w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0x9 & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x9);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF2w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0xA & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xA);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF3w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0xB & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xB);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF4w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0xC & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xC);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF5w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0xD & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xD);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF6w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0xE & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xE);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }
 static void VMACF7w(void)
 {
     short SV[N];
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        SV[i] = VR[vt][(0xF & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xF);
     do_macf(VR[vd], VR[vs], SV);
     return;
 }

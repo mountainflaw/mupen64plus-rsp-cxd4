@@ -25,18 +25,22 @@
  * +1:  VT *= +1, because VS > 0 // VT ^=  0
  *      VT ^= -1, "negate" -32768 as ~+32767 (corner case hack for N64 SP)
  */
-void do_abs(int vs)
-{ /* very experimental -- Laid out for explicit division of steps, not speed. */
-    signed int neg[8], pos[8];
-    signed int nez[8], cch[8]; /* corner case hack -- abs(-32768) == +32767 */
+void do_abs(short* VD, short* VS, short* VT)
+{
+    signed int neg[N], pos[N];
+    signed int nez[N], cch[N]; /* corner case hack -- abs(-32768) == +32767 */
+    short res[N];
     register int i;
+
+    for (i = 0; i < N; i++)
+        res[i] = VT[i];
 #if (0)
 #define MASK_XOR
 #endif
     for (i = 0; i < N; i++)
-        neg[i]  = (VR[vs][i] <  0x0000);
+        neg[i]  = (VS[i] <  0x0000);
     for (i = 0; i < N; i++)
-        pos[i]  = (VR[vs][i] >  0x0000);
+        pos[i]  = (VS[i] >  0x0000);
     for (i = 0; i < N; i++)
         nez[i]  = 0;
 #ifdef MASK_XOR
@@ -52,259 +56,186 @@ void do_abs(int vs)
         nez[i] += pos[i];
 #ifdef MASK_XOR
     for (i = 0; i < N; i++)
-        result[i] ^= nez[i];
+        res[i] ^= nez[i];
     for (i = 0; i < N; i++)
-        cch[i]  = (result[i] != -32768);
+        cch[i]  = (res[i] != -32768);
     for (i = 0; i < N; i++)
-        result[i] += cch[i]; /* -(x) === (x ^ -1) + 1 */
+        res[i] += cch[i]; /* -(x) === (x ^ -1) + 1 */
 #else
     for (i = 0; i < N; i++)
-        result[i] *= nez[i];
+        res[i] *= nez[i];
     for (i = 0; i < N; i++)
-        cch[i]  = (result[i] == -32768);
+        cch[i]  = (res[i] == -32768);
     for (i = 0; i < N; i++)
-        result[i] -= cch[i];
+        res[i] -= cch[i];
 #endif
+    for (i = 0; i < N; i++)
+        ACC_L(i) = res[i];
+    for (i = 0; i < N; i++)
+        VD[i] = ACC_L(i);
     return;
 }
 
 static void VABS_v(void)
 {
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][i];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    do_abs(VR[vd], VR[vs], VR[vt]);
     return;
 }
 static void VABS0q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x2 & 01) + (i & 0xE)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x2);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS1q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x3 & 01) + (i & 0xE)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x3);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS0h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x4 & 03) + (i & 0xC)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x4);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS1h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x5 & 03) + (i & 0xC)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x5);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS2h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x6 & 03) + (i & 0xC)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x6);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS3h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x7 & 03) + (i & 0xC)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x7);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS0w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x8 & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x8);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS1w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0x9 & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x9);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS2w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0xA & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xA);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS3w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0xB & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xB);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS4w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0xC & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xC);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS5w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0xD & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xD);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS6w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0xE & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xE);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }
 static void VABS7w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        result[i] = VR[vt][(0xF & 07) + (i & 0x0)];
-    do_abs(vs);
-    for (i = 0; i < N; i++)
-        ACC_L(i) = (short)(result[i]);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xF);
+    do_abs(VR[vd], VR[vs], SV);
     return;
 }

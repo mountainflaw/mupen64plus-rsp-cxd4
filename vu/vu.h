@@ -20,7 +20,7 @@
 /******************************************************************************\
 * Project:  MSP Emulation Layer for Vector Unit Computational Operations       *
 * Authors:  Iconoclast                                                         *
-* Release:  2013.09.18                                                         *
+* Release:  2013.09.19                                                         *
 * License:  none (public domain)                                               *
 \******************************************************************************/
 #ifndef _VU_H
@@ -31,19 +31,6 @@
  */
 #include <memory.h>
 #include <string.h>
-
-/*
- * Un-define this if your environment lacks the SSE2 instruction set.
- */
-#define ARCH_MIN_SSE2
-
-#ifdef ARCH_MIN_SSE2
-#include <emmintrin.h>
-typedef __m128i VECTOR;
-#else
-/* ANSI C approximation for RSP vectors */
-typedef short* VECTOR;
-#endif
 
 /*
  * vector-scalar element decoding
@@ -79,8 +66,7 @@ static const int ei[16][8] = {
  * For ?WC2 we may need to do byte-precision access just as directly.
  * This is amended by using the `VU_S` and `VU_B` macros defined in `rsp.h`.
  */
-short VR[32][N];
-short VC[N]; /* vector/scalar coefficient */
+ALIGNED short VR[32][N];
 
 /* #define EMULATE_VECTOR_RESULT_BUFFER */
 /*
@@ -91,23 +77,8 @@ short VC[N]; /* vector/scalar coefficient */
  * the destination vector register file from within the vector operation.
  */
 
-/* #define PARALLELIZE_VECTOR_TRANSFERS */
-/*
- * Leaving this defined, the RSP emulator will try to encourage parallel
- * transactions within vector element operations by shuffling the target
- * (partially scalar coefficient) vector register as necessary so that
- * the elements `i`(0..7) of VS can directly match up with 1:1
- * parallelism to the short elements `i`(0..7) of the shuffled VT.
- */
-
 #ifdef EMULATE_VECTOR_RESULT_BUFFER
 static short Result[8];
-#endif
-
-#ifdef PARALLELIZE_VECTOR_TRANSFERS
-#define VR_T(i) VC[i]
-#else
-#define VR_T(i) VR[vt][ei[e][i]]
 #endif
 
 #ifdef EMULATE_VECTOR_RESULT_BUFFER
@@ -118,7 +89,14 @@ static short Result[8];
 
 #define VR_D(i) VMUL_PTR[i]
 
-#ifndef ARCH_MIN_SSE2
+/*
+ * Un-define this if your environment lacks the SSE2 instruction set.
+ */
+#define ARCH_MIN_SSE2
+
+#ifdef ARCH_MIN_SSE2
+#include "shuffle.h"
+#else
 int sub_mask[16] = {
     0x0,
     0x0,
@@ -126,7 +104,8 @@ int sub_mask[16] = {
     0x3, 0x3, 0x3, 0x3,
     0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7
 };
-static VECTOR SHUFFLE_VECTOR(VECTOR VT, int e)
+
+INLINE static void SHUFFLE_VECTOR(short* VD, short* VT, const int e)
 {
     short SV[8];
     register int i, j;
@@ -150,56 +129,11 @@ static VECTOR SHUFFLE_VECTOR(VECTOR VT, int e)
         for (i = 0; i < N; i++)
             SV[i] = VT[(i & 0x7) | (e & 0x0)];
 #endif
-    return (SV);
-}
-static void STORE_VECTOR(short* VD, short* VS)
-{
-    VD = VS;
-    return;
-}
-#else
-#define SHUFFLE(a,b,c,d)    (((a) << 6) | ((b) << 4) | ((c) << 2) | ((d) << 0))
-const int simm[8] = {
-    SHUFFLE(0x03, 0x02, 0x01, 0x00), /* vector operand */
-    SHUFFLE(0x03, 0x02, 0x01, 0x00),
-    SHUFFLE(0x02, 0x02, 0x00, 0x00), /* scalar quarter:  0q */
-    SHUFFLE(0x03, 0x03, 0x01, 0x01), /* scalar quarter:  1q */
-    SHUFFLE(0x00, 0x00, 0x00, 0x00), /* scalar half   :  0h */
-    SHUFFLE(0x01, 0x01, 0x01, 0x01), /* scalar half   :  1h */
-    SHUFFLE(0x02, 0x02, 0x02, 0x02), /* scalar half   :  2h */
-    SHUFFLE(0x03, 0x03, 0x03, 0x03)  /* scalar half   :  3h */
-};
-
-static VECTOR SHUFFLE_VECTOR(short* VT, int e)
-{
-    VECTOR SV;
-    const int element = e & 0x7;
-
-    SV = _mm_load_si128((VECTOR*)VT);
-    SV = _mm_shufflehi_epi16(SV, simm[element]);
-    SV = _mm_shufflelo_epi16(SV, simm[element]);
-    return (SV);
-}
-static void STORE_VECTOR(short* VD, __m128i xmm)
-{
-    _mm_store_si128((__m128i*)VD, xmm);
+    for (i = 0; i < N; i++)
+        *(VD + i) = *(SV + i);
     return;
 }
 #endif
-/*
- * The following may be written the same way when compiled either for SSE2
- * or any older systems, due to the simplicity of the basic loop pattern.
- */
-static short* SHUFFLE_SCALAR(short* VT, int e)
-{
-    short* SV;
-    register int i;
-    const int element = e & 0x7;
-
-    for (i = 0; i < N; i++) /* easily vectorized to SSE2 via compiler smarts */
-        *(SV + i) = *(VT + element);
-    return (SV);
-}
 
 /*
  * accumulator-indexing macros (inverted access dimensions, suited for SSE)
@@ -209,20 +143,21 @@ static short* SHUFFLE_SCALAR(short* VT, int e)
 #define LO      02
 
 #if (0)
-short VACC_L[N];
-short VACC_M[N];
-short VACC_H[N];
+ALIGNED static short VACC_L[N];
+ALIGNED static short VACC_M[N];
+ALIGNED static short VACC_H[N];
 
-#define ACC_L(i)   (VACC_L[i])
-#define ACC_M(i)   (VACC_M[i])
-#define ACC_H(i)   (VACC_H[i])
 #else
-short VACC[3][N];
+ALIGNED static short VACC[3][N];
 
-#define ACC_L(i)   (VACC[LO][i])
-#define ACC_M(i)   (VACC[MD][i])
-#define ACC_H(i)   (VACC[HI][i])
+#define VACC_L      (VACC[LO])
+#define VACC_M      (VACC[MD])
+#define VACC_H      (VACC[HI])
 #endif
+
+#define ACC_L(i)    (VACC_L[i])
+#define ACC_M(i)    (VACC_M[i])
+#define ACC_H(i)    (VACC_H[i])
 
 /*
  * modes of saturation (unofficial labels, just made up by file author)
@@ -239,7 +174,7 @@ enum {
     EOL /* more stuff here if you want */
 };
 
-signed int result[N];
+static signed int result[N];
 
 INLINE void SIGNED_CLAMP(short* VD, int mode)
 {
@@ -249,10 +184,6 @@ INLINE void SIGNED_CLAMP(short* VD, int mode)
     switch (mode)
     {
         case SM_MUL_X: /* typical sign-clamp of accumulator-mid (bits 31:16) */
-            for (i = 0; i < N; i++)
-                result[i] = ACC_H(i) << 16;
-            for (i = 0; i < N; i++)
-                result[i] = result[i] | (unsigned short)ACC_M(i);
             for (i = 0; i < N; i++)
                 VD[i]  = ACC_M(i);
             for (i = 0; i < N; i++)
@@ -267,10 +198,6 @@ INLINE void SIGNED_CLAMP(short* VD, int mode)
                 VD[i] ^= 0x8000 & (hi[i] | lo[i]);
             return;
         case SM_MUL_Z: /* sign-clamp accumulator-low (bits 15:0) */
-            for (i = 0; i < N; i++)
-                result[i] = ACC_H(i) << 16;
-            for (i = 0; i < N; i++)
-                result[i] = result[i] | (unsigned short)ACC_M(i);
             for (i = 0; i < N; i++)
                 VD[i]  = ACC_L(i);
             for (i = 0; i < N; i++)
@@ -322,7 +249,7 @@ int comp[N]; /* $vcc:  vector compare code register (low byte:  compare) */
 int vce[N]; /* $vce:  vector compare extension register (one byte) */
 
 /*
- * Note about the third vector control flags register (VCE).
+ * Note about the third vector condition flags register (VCE).
  *
  * Only CFC2, CTC2, and VCH may set this value without clearing.
  * My personal method of saying it:

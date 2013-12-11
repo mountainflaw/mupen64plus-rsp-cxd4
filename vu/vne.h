@@ -19,23 +19,25 @@
 
 #include "vu.h"
 
-void do_ne(int vs)
+void do_ne(short* VD, short* VS, short* VT)
 {
     register int i;
 
     for (i = 0; i < N; i++)
         clip[i] = 0;
     for (i = 0; i < N; i++)
-        comp[i] = (VR[vs][i] != VC[i]);
+        comp[i] = (VS[i] != VT[i]);
     for (i = 0; i < N; i++)
         comp[i] = comp[i] | ne[i];
 #if (0)
     for (i = 0; i < N; i++)
-        ACC_L(i) = comp[i] ? VR[vs][i] : VC[i]; /* correct but redundant */
+        ACC_L(i) = comp[i] ? VS[i] : VT[i]; /* correct but redundant */
 #else
     for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vs][i];
+        ACC_L(i) = VS[i];
 #endif
+    memcpy(VD, VACC_L, N*sizeof(short));
+
     for (i = 0; i < N; i++)
         ne[i] = 0;
     for (i = 0; i < N; i++)
@@ -45,211 +47,164 @@ void do_ne(int vs)
 
 static void VNE_v(void)
 {
-    register int i;
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][i];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    do_ne(VR[vd], VR[vs], VR[vt]);
     return;
 }
 static void VNE0q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x2 & 01) + (i & 0xE)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x2);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE1q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x3 & 01) + (i & 0xE)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x3);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE0h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x4 & 03) + (i & 0xC)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x4);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE1h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x5 & 03) + (i & 0xC)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x5);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE2h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x6 & 03) + (i & 0xC)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x6);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE3h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x7 & 03) + (i & 0xC)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x7);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE0w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x8 & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x8);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE1w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0x9 & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0x9);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE2w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xA & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xA);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE3w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xB & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xB);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE4w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xC & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xC);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE5w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xD & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xD);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE6w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xE & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xE);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }
 static void VNE7w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int vs = inst.R.rd;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        VC[i] = VR[vt][(0xF & 07) + (i & 0x0)];
-    do_ne(vs);
-    for (i = 0; i < N; i++)
-        VR[vd][i] = ACC_L(i);
+    SHUFFLE_VECTOR(SV, VR[vt], 0xF);
+    do_ne(VR[vd], VR[vs], SV);
     return;
 }

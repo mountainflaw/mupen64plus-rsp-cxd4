@@ -21,193 +21,189 @@
 
 static void VMOVv0(void)
 {
-    register int i;
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x0 & 0x0) + (i & 0x7)];
+    memcpy(VACC_L, VR[vt], N*sizeof(short));
     VR[vd][de] = ACC_L(00);
     return;
 }
 static void VMOVv1(void)
 {
-    register int i;
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x1 & 0x0) + (i & 0x7)];
-    VR[vd][de] = ACC_L(01);
+    memcpy(VACC_L, VR[vt], N*sizeof(short));
+    VR[vd][de] = ACC_L(00);
     return;
 }
 static void VMOV0q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x2 & 0x1) + (i & 0xE)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x2);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(02);
     return;
 }
 static void VMOV1q(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x3 & 0x1) + (i & 0xE)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x3);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(03);
     return;
 }
 static void VMOV0h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x4 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x4);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(04);
     return;
 }
 static void VMOV1h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x5 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x5);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(05);
     return;
 }
 static void VMOV2h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x6 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x6);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(06);
     return;
 }
 static void VMOV3h(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x7 & 0x3) + (i & 0xC)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x7);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(07);
     return;
 }
 static void VMOV0w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x8 & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x8);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(00);
     return;
 }
 static void VMOV1w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0x9 & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0x9);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(01);
     return;
 }
 static void VMOV2w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0xA & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xA);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(02);
     return;
 }
 static void VMOV3w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0xB & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xB);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(03);
     return;
 }
 static void VMOV4w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0xC & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xC);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(04);
     return;
 }
 static void VMOV5w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0xD & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xD);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(05);
     return;
 }
 static void VMOV6w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0xE & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xE);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(06);
     return;
 }
 static void VMOV7w(void)
 {
-    register int i;
+    short SV[N];
     const int vd = inst.R.sa;
     const int de = inst.R.rd & 07;
     const int vt = inst.R.rt;
 
-    for (i = 0; i < N; i++)
-        ACC_L(i) = VR[vt][(0xF & 0x7) + (i & 0x0)];
+    SHUFFLE_VECTOR(SV, VR[vt], 0xF);
+    memcpy(VACC_L, SV, N*sizeof(short));
     VR[vd][de] = ACC_L(07);
     return;
 }
