@@ -99,7 +99,7 @@ EXPORT void CALL DllConfig(HWND hParent)
     fprintf(stream, "--- -------- --------------------------------\n");
     for (PC = 0; PC < 4096; PC += 4)
     {
-        const unsigned long inst = *(long *)(RSP.IMEM + PC);
+        const uint32_t inst = *(uint32_t *)(RSP.IMEM + PC);
 
         disassemble(inst);
         fprintf(stream, "%03X %08lX %s\n", PC, inst, disasm);
@@ -166,7 +166,7 @@ strcpy(
     return;
 }
 
-unsigned long* CR[16];
+uint32_t* CR[16];
 EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
 {
     if (CycleCount != NULL) /* cycle-accuracy not doable with today's hosts */

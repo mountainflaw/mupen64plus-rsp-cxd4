@@ -56,7 +56,7 @@ EX:
             switch (op)
             {
                 signed int offset;
-                register unsigned long addr;
+                register uintptr_t addr;
 
                 case 000: /* SPECIAL */
                     switch (inst % 64)
@@ -440,7 +440,7 @@ EX:
 #else
         continue;
 BRANCH:
-        inst = *(long *)(RSP.IMEM + FIT_IMEM(PC));
+        inst = *(uint32_t *)(RSP.IMEM + FIT_IMEM(PC));
         PC = temp_PC & 0x00000FFC;
         goto EX;
 #endif
