@@ -19,7 +19,7 @@ void run_task(void)
     PC = *RSP.SP_PC_REG & 0x00000FFC;
     while ((*RSP.SP_STATUS_REG & 0x00000001) == 0x00000000)
     {
-        const unsigned long inst = *(long *)(RSP.IMEM + PC);
+        const uint32_t inst = *(uint32_t *)(RSP.IMEM + PC);
         const unsigned short imm = *(short *)(RSP.IMEM + PC + HES(0x002));
         const short IW_upper_16  = *(short *)(RSP.IMEM + PC + HES(0x000));
 
