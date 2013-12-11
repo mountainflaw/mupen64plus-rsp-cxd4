@@ -438,7 +438,7 @@ static void LW(void) /* 100011 sssss ttttt iiiiiiiiiiiiiiii */
         SR_S(rt, 2) = *(short *)(RSP.DMEM + addr + HES(0x000));
         return;
     }
-    SR[rt] = *(long *)(RSP.DMEM + addr); /* can emulate completely accurate */
+    SR[rt] = *(int32_t *)(RSP.DMEM + addr); /* can emulate completely accurate */
 #endif
     return;
 }
@@ -541,7 +541,7 @@ static void SW(void) /* 101011 sssss ttttt iiiiiiiiiiiiiiii */
         *(short *)(RSP.DMEM + addr + HES(0x000)) = SR_S(rt, 2);
         return;
     }
-    *(long *)(RSP.DMEM + addr) = SR[rt];
+    *(int32_t *)(RSP.DMEM + addr) = SR[rt];
 #endif
     return;
 }
