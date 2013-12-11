@@ -40,9 +40,7 @@ INLINE static void do_madl(short* VD, short* VS, short* VT)
     for (i = 0; i < N; i++)
         VACC_M[i] = (short)(addend[i]);
     for (i = 0; i < N; i++)
-        result[i] = (VACC_H[i] << 16) + addend[i];
-    for (i = 0; i < N; i++)
-        VACC_H[i] = (short)(result[i] >> 16);
+        VACC_H[i] += addend[i] >> 16;
     SIGNED_CLAMP(VD, SM_MUL_Z);
     return;
 }
