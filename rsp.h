@@ -282,7 +282,7 @@ NOINLINE void trace_RSP_registers(void)
  * them from the RCP's point of view or the CPU host's mapped point of view.
  */
     for (i = 0; i < 8; i++)
-        fprintf(out, "%s:  %08lX    %s:  %08lX\n",
+        fprintf(out, "%s:  %08"PRIX32"    %s:  %08"PRIX32"\n",
             CR_names[i+0], *(CR[i+0]), CR_names[i+8], *(CR[i+8]));
     fprintf(out, "\n");
 /*

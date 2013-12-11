@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include "Rsp_#1.1.h"
 #include "rsp.h"
@@ -102,7 +103,7 @@ EXPORT void CALL DllConfig(HWND hParent)
         const uint32_t inst = *(uint32_t *)(RSP.IMEM + PC);
 
         disassemble(inst);
-        fprintf(stream, "%03X %08lX %s\n", PC, inst, disasm);
+        fprintf(stream, "%03X %08"PRIX32" %s\n", PC, inst, disasm);
     }
     fclose(stream);
     return;
