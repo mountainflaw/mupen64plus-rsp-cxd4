@@ -24,9 +24,11 @@
 RSP_INFO RSP;
 
 #ifdef _MSC_VER
-#define INLINE __inline
+#define INLINE      __inline
+#define NOINLINE    __noinline
 #else
-#define INLINE inline
+#define INLINE      inline
+#define NOINLINE    __attribute__((noinline))
 #endif
 
 #ifdef WINUSERAPI
@@ -52,7 +54,7 @@ __attribute__((noinline)) void message(const char* body, int priority)
 }
 #else
 #if !defined(M64P_PLUGIN_API)
-__attribute__((noinline)) void message(const char* body, int priority)
+NOINLINE void message(const char* body, int priority)
 { /* Avoid SHELL32/ADVAPI32/USER32 dependencies by using standard C to print. */
     char argv[4096] = "CMD /D /S /Q /T:0E /K \"ECHO ";
     int i = 0;
@@ -81,7 +83,7 @@ __attribute__((noinline)) void message(const char* body, int priority)
     system(argv);
 }
 #else
-__attribute__((noinline)) void message(const char* body, int priority)
+NOINLINE void message(const char* body, int priority)
 {
     priority &= 03;
     if (priority < MINIMUM_MESSAGE_PRIORITY)
