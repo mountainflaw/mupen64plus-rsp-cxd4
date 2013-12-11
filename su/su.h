@@ -127,7 +127,7 @@ static void BREAK(void) /* 000000 ----- ----- ----- ----- 001101 */
 /*** Scalar, Jump and Branch Operations ***/
 #define SLOT_OFF    0x004
 #define LINK_OFF    0x008
-INLINE void B(signed int off18) /* MIPS assembly idiom "Unconditional Branch" */
+void B(signed int off18) /* MIPS assembly idiom "Unconditional Branch" */
 {
     if (SR[0] == SR[0]) /* B is a pseudo-op-code for `BEQ $0, $0, offset`. */
     {
@@ -654,7 +654,7 @@ static void MTC0(void)
             *RSP.MI_INTR_REG &= ~((SR[rt] & 0x00000008) >> 3); /* SP_CLR_INTR */
             *RSP.MI_INTR_REG |=  ((SR[rt] & 0x00000010) >> 4); /* SP_SET_INTR */
             *RSP.SP_STATUS_REG |= (SR[rt] & 0x00000010) >> 4; /* int set halt */
-            //stage |= SR[rt] & 0x00000040; /// fix this shit???
+            /* stage |= SR[rt] & 0x00000040; */
             *RSP.SP_STATUS_REG &= ~(!!(SR[rt] & 0x00000020) <<  5);
             *RSP.SP_STATUS_REG |=  (!!(SR[rt] & 0x00000040) <<  5);
             *RSP.SP_STATUS_REG &= ~(!!(SR[rt] & 0x00000080) <<  6);
@@ -800,7 +800,7 @@ extern unsigned short* vCR[2];
 extern unsigned char VCE;
 #define VR_B(v, e)  (*(unsigned char *)(((unsigned char *)(VR + v)) + MES(e)))
 #define VR_S(v, e)  (*(short *)((unsigned char *)(*(VR + v)) + ((e + 1) & ~1)))
-// to-do:  check this stupid thing for (unsigned char *)(VR+v) like above?
+/* to-do:  check this stupid thing for (unsigned char *)(VR+v) like above? */
 static void MFC2(void)
 {
     const int rt = inst.R.rt;
@@ -856,7 +856,7 @@ static void C2(void)
 }
 
 /*** Scalar, Coprocessor Operations (vector unit, scalar cache transfers) ***/
-INLINE void LS_Group_I(int direction, int length)
+void LS_Group_I(int direction, int length)
 { /* Group I vector loads and stores, as defined in SGI's patent. */
     register unsigned long addr;
     register int i;
@@ -925,7 +925,7 @@ void LLV(void)
 void LDV(void)
 {
 #if (1)
-    LS_Group_I(0, sizeof(long long) > 8 ? 8 : sizeof(long long));
+    LS_Group_I(0, 8);
     return;
 #else
     register unsigned long addr;
@@ -1072,7 +1072,7 @@ void SLV(void)
 void SDV(void)
 {
 #if (1)
-    LS_Group_I(1, sizeof(long long) > 8 ? 8 : sizeof(long long));
+    LS_Group_I(1, 8);
     return;
 #else
     0 = 0 / 0;
@@ -1100,7 +1100,7 @@ void LPV(void)
     b = addr & 07;
     addr &= ~07;
     switch (b)
-    { /// to-do:  vectorize shifts ???
+    { /** to-do:  vectorize shifts ??? **/
         case 00:
             VR[vt][07] = RSP.DMEM[addr + BES(0x007)] << 8;
             VR[vt][06] = RSP.DMEM[addr + BES(0x006)] << 8;
@@ -1202,7 +1202,7 @@ void LUV(void)
     register unsigned long addr;
     register int b;
     const int vt = inst.R.rt;
-    int e  = inst.R.sa >> 1; /// fixme >.<
+    int e  = inst.R.sa >> 1; /* fixme >.< */
     const signed int offset = -(inst.W & 0x00000040) | inst.R.func;
 
     addr = (SR[inst.R.rs] + 8*offset) & 0x00000FFF;
@@ -1216,7 +1216,7 @@ void LUV(void)
             --e;
             addr -= 16 * (e == 0x0);
             ++addr;
-        } /// to-do:  this shit can't be straightforward, like SQV ?
+        } /* to-do:  this shit can't be straightforward, like SQV ? */
         return;
     }
     b = addr & 07;
@@ -1737,7 +1737,7 @@ void LRV(void)
 }
 void SQV(void)
 {
-    register int i;
+    register unsigned int i;
     register unsigned long addr;
     const int e = inst.R.sa >> 1;
     const signed int offset = -(inst.W & 0x00000040) | inst.R.func;
