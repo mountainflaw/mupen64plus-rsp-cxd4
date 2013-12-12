@@ -205,7 +205,7 @@ void step_SP_commands(uint32_t inst)
 NOINLINE void export_data_cache(void)
 {
     FILE* out;
-    register uintptr_t addr;
+    register uint32_t addr;
 
     out = fopen("rcpcache.dhex", "wb");
 #if (0)
@@ -226,7 +226,7 @@ NOINLINE void export_data_cache(void)
 NOINLINE void export_instruction_cache(void)
 {
     FILE* out;
-    register uintptr_t addr;
+    register uint32_t addr;
 
     out = fopen("rcpcache.ihex", "wb");
 #if (0)

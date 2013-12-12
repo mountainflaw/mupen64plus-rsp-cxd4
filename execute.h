@@ -56,7 +56,7 @@ EX:
             switch (op)
             {
                 signed int offset;
-                register uintptr_t addr;
+                register uint32_t addr;
 
                 case 000: /* SPECIAL */
                     switch (inst % 64)
