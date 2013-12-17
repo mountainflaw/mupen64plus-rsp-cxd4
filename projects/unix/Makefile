@@ -128,12 +128,12 @@ ifeq ($(CPU), X86)
   ifeq ($(SSE), SSE2)
     CFLAGS   += -msse2
     CPPFLAGS += -DARCH_MIN_SSE2
-#   POSTFIX = -sse2
+    POSTFIX = -sse2
   endif
   ifeq ($(SSE), SSSE3)
     CFLAGS   += -mssse3
     CPPFLAGS += -DARCH_MIN_SSSE3
-#   POSTFIX = -ssse3
+    POSTFIX = -ssse3
   endif
 endif
 
