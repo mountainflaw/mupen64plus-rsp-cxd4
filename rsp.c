@@ -12,14 +12,145 @@
 #define RSP_CXD4_VERSION 0x0101
 
 #if defined(M64P_PLUGIN_API)
+
+#include <stdarg.h>
+
 #define RSP_PLUGIN_API_VERSION 0x020000
+#define CONFIG_API_VERSION       0x020100
+#define CONFIG_PARAM_VERSION     1.00
+
+static void (*l_DebugCallback)(void *, int, const char *) = NULL;
+static void *l_DebugCallContext = NULL;
 static int l_PluginInit = 0;
+static m64p_handle l_ConfigRsp;
+
+#define VERSION_PRINTF_SPLIT(x) (((x) >> 16) & 0xffff), (((x) >> 8) & 0xff), ((x) & 0xff)
+
+ptr_ConfigOpenSection      ConfigOpenSection = NULL;
+ptr_ConfigDeleteSection    ConfigDeleteSection = NULL;
+ptr_ConfigSaveSection      ConfigSaveSection = NULL;
+ptr_ConfigSetParameter     ConfigSetParameter = NULL;
+ptr_ConfigGetParameter     ConfigGetParameter = NULL;
+ptr_ConfigSetDefaultFloat  ConfigSetDefaultFloat;
+ptr_ConfigSetDefaultBool   ConfigSetDefaultBool = NULL;
+ptr_ConfigGetParamBool     ConfigGetParamBool = NULL;
+
+NOINLINE void update_conf(const char* source)
+{
+    memset(conf, 0, sizeof(conf));
+
+    CFG_HLE_GFX = ConfigGetParamBool(l_ConfigRsp, "DisplayListToGraphicsPlugin");
+    CFG_HLE_AUD = ConfigGetParamBool(l_ConfigRsp, "AudioListToAudioPlugin");
+    CFG_WAIT_FOR_CPU_HOST = ConfigGetParamBool(l_ConfigRsp, "WaitForCPUHost");
+    CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
+}
+
+static void DebugMessage(int level, const char *message, ...)
+{
+  char msgbuf[1024];
+  va_list args;
+
+  if (l_DebugCallback == NULL)
+      return;
+
+  va_start(args, message);
+  vsprintf(msgbuf, message, args);
+
+  (*l_DebugCallback)(l_DebugCallContext, level, msgbuf);
+
+  va_end(args);
+}
 
 EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Context,
                                      void (*DebugCallback)(void *, int, const char *))
 {
+    ptr_CoreGetAPIVersions CoreAPIVersionFunc;
+
+    int ConfigAPIVersion, DebugAPIVersion, VidextAPIVersion, bSaveConfig;
+    float fConfigParamsVersion = 0.0f;
+
     if (l_PluginInit)
         return M64ERR_ALREADY_INIT;
+
+    /* first thing is to set the callback function for debug info */
+    l_DebugCallback = DebugCallback;
+    l_DebugCallContext = Context;
+
+    /* attach and call the CoreGetAPIVersions function, check Config API version for compatibility */
+    CoreAPIVersionFunc = (ptr_CoreGetAPIVersions) osal_dynlib_getproc(CoreLibHandle, "CoreGetAPIVersions");
+    if (CoreAPIVersionFunc == NULL)
+    {
+        DebugMessage(M64MSG_ERROR, "Core emulator broken; no CoreAPIVersionFunc() function found.");
+        return M64ERR_INCOMPATIBLE;
+    }
+
+    (*CoreAPIVersionFunc)(&ConfigAPIVersion, &DebugAPIVersion, &VidextAPIVersion, NULL);
+    if ((ConfigAPIVersion & 0xffff0000) != (CONFIG_API_VERSION & 0xffff0000))
+    {
+        DebugMessage(M64MSG_ERROR, "Emulator core Config API (v%i.%i.%i) incompatible with plugin (v%i.%i.%i)",
+                VERSION_PRINTF_SPLIT(ConfigAPIVersion), VERSION_PRINTF_SPLIT(CONFIG_API_VERSION));
+        return M64ERR_INCOMPATIBLE;
+    }
+
+    /* Get the core config function pointers from the library handle */
+    ConfigOpenSection = (ptr_ConfigOpenSection) osal_dynlib_getproc(CoreLibHandle, "ConfigOpenSection");
+    ConfigDeleteSection = (ptr_ConfigDeleteSection) osal_dynlib_getproc(CoreLibHandle, "ConfigDeleteSection");
+    ConfigSaveSection = (ptr_ConfigSaveSection) osal_dynlib_getproc(CoreLibHandle, "ConfigSaveSection");
+    ConfigSetParameter = (ptr_ConfigSetParameter) osal_dynlib_getproc(CoreLibHandle, "ConfigSetParameter");
+    ConfigGetParameter = (ptr_ConfigGetParameter) osal_dynlib_getproc(CoreLibHandle, "ConfigGetParameter");
+    ConfigSetDefaultFloat = (ptr_ConfigSetDefaultFloat) osal_dynlib_getproc(CoreLibHandle, "ConfigSetDefaultFloat");
+    ConfigSetDefaultBool = (ptr_ConfigSetDefaultBool) osal_dynlib_getproc(CoreLibHandle, "ConfigSetDefaultBool");
+    ConfigGetParamBool = (ptr_ConfigGetParamBool) osal_dynlib_getproc(CoreLibHandle, "ConfigGetParamBool");
+
+    if (!ConfigOpenSection || !ConfigDeleteSection || !ConfigSetParameter || !ConfigGetParameter ||
+        !ConfigSetDefaultBool || !ConfigGetParamBool || !ConfigSetDefaultFloat)
+        return M64ERR_INCOMPATIBLE;
+
+    /* ConfigSaveSection was added in Config API v2.1.0 */
+    if (ConfigAPIVersion >= 0x020100 && !ConfigSaveSection)
+        return M64ERR_INCOMPATIBLE;
+
+    /* get a configuration section handle */
+    if (ConfigOpenSection("rsp-cxd4", &l_ConfigRsp) != M64ERR_SUCCESS)
+    {
+        DebugMessage(M64MSG_ERROR, "Couldn't open config section 'rsp-cxd4'");
+        return M64ERR_INPUT_NOT_FOUND;
+    }
+
+    /* check the section version number */
+    bSaveConfig = 0;
+    if (ConfigGetParameter(l_ConfigRsp, "Version", M64TYPE_FLOAT, &fConfigParamsVersion, sizeof(float)) != M64ERR_SUCCESS)
+    {
+        DebugMessage(M64MSG_WARNING, "No version number in 'rsp-cxd4' config section. Setting defaults.");
+        ConfigDeleteSection("rsp-cxd4");
+        ConfigOpenSection("rsp-cxd4", &l_ConfigRsp);
+        bSaveConfig = 1;
+    }
+    else if (((int) fConfigParamsVersion) != ((int) CONFIG_PARAM_VERSION))
+    {
+        DebugMessage(M64MSG_WARNING, "Incompatible version %.2f in 'rsp-cxd4' config section: current is %.2f. Setting defaults.", fConfigParamsVersion, (float) CONFIG_PARAM_VERSION);
+        ConfigDeleteSection("rsp-cxd4");
+        ConfigOpenSection("rsp-cxd4", &l_ConfigRsp);
+        bSaveConfig = 1;
+    }
+    else if ((CONFIG_PARAM_VERSION - fConfigParamsVersion) >= 0.0001f)
+    {
+        /* handle upgrades */
+        float fVersion = CONFIG_PARAM_VERSION;
+        ConfigSetParameter(l_ConfigRsp, "Version", M64TYPE_FLOAT, &fVersion);
+        DebugMessage(M64MSG_INFO, "Updating parameter set version in 'rsp-cxd4' config section to %.2f", fVersion);
+        bSaveConfig = 1;
+    }
+
+    /* set the default values for this plugin */
+    ConfigSetDefaultFloat(l_ConfigRsp, "Version", CONFIG_PARAM_VERSION,  "Mupen64Plus cxd4 RSP Plugin config parameter version number");
+    ConfigSetDefaultBool(l_ConfigRsp, "DisplayListToGraphicsPlugin", 0, "Send display lists to the graphics plugin");
+    ConfigSetDefaultBool(l_ConfigRsp, "AudioListToAudioPlugin", 0, "Send audio lists to the audio plugin");
+    ConfigSetDefaultBool(l_ConfigRsp, "WaitForCPUHost", 0, "Force CPU-RSP signals synchronization");
+    ConfigSetDefaultBool(l_ConfigRsp, "SupportCPUSemaphoreLock", 0, "Support CPU-RSP semaphore lock");
+
+    if (bSaveConfig && ConfigAPIVersion >= 0x020100)
+        ConfigSaveSection("rsp-cxd4");
 
     l_PluginInit = 1;
     return M64ERR_SUCCESS;

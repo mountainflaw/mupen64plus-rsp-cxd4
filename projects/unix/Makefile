@@ -147,11 +147,6 @@ else
   LDFLAGS += -fno-PIC
 endif
 
-ifeq ($(HLEVIDEO), 1)
-  CFLAGS += -DM64P_HLEVIDEO
-  POSTFIX = -hlevideo
-endif
-
 ifeq ($(BIG_ENDIAN), 1)
   CFLAGS += -DM64P_BIG_ENDIAN
 endif
@@ -259,6 +254,12 @@ OBJDIR = _obj$(POSTFIX)
 # list of source files to compile
 SOURCE = \
 	$(SRCDIR)/rsp.c
+
+ifeq ($(OS),MINGW)
+SOURCE += $(SRCDIR)/osal_dynamiclib_win32.c
+else
+SOURCE += $(SRCDIR)/osal_dynamiclib_unix.c
+endif
 
 # generate a list of object files build, make a temporary directory for them
 OBJECTS := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(filter %.c, $(SOURCE)))

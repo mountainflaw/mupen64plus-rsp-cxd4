@@ -103,6 +103,8 @@ typedef struct {
 #include "m64p_types.h"
 #include "m64p_common.h"
 #include "m64p_plugin.h"
+#include "m64p_config.h"
+#include "osal_dynamiclib.h"
 #else
 #if defined(WIN32)
 #define EXPORT      __declspec(dllexport)

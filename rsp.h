@@ -123,16 +123,6 @@ NOINLINE void update_conf(const char* source)
     fclose(stream);
     return;
 }
-#else
-void update_conf(const char* source)
-{
-    memset(conf, 0, sizeof(conf));
-#if defined(M64P_HLEVIDEO)
-    CFG_HLE_GFX = 1;
-#else
-    CFG_HLE_GFX = 0;
-#endif
-}
 #endif
 
 #ifndef EMULATE_STATIC_PC
