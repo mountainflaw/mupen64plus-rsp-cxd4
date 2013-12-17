@@ -124,6 +124,7 @@ CPPFLAGS += -DM64P_PLUGIN_API
 LDFLAGS += $(SHARED)
 
 ifeq ($(CPU), X86)
+  SSE ?= SSE2
   ifeq ($(SSE), SSE2)
     CFLAGS   += -msse2
     CPPFLAGS += -DARCH_MIN_SSE2
