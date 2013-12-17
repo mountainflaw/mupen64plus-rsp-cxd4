@@ -124,7 +124,7 @@ CPPFLAGS += -DM64P_PLUGIN_API
 LDFLAGS += $(SHARED)
 
 ifeq ($(CPU), X86)
-  CFLAGS += -m3dnow -mmmx -msse -msse2
+  CFLAGS += -mmmx -msse -msse2
 endif
 
 # Since we are building a shared library, we must compile with -fPIC on some architectures
