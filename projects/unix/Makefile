@@ -1,6 +1,6 @@
 #/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 # *   mupen64plus-rsp-cxd4 - Makefile                                       *
-# *   http://bitbucket.org/richard42/mupen64plus-rsp-cxd4/                  *
+# *   http://bitbucket.org/ecsv/mupen64plus-rsp-cxd4/                       *
 # *   Copyright (C) 2010 Jon Ring                                           *
 # *   Copyright (C) 2008-2009 Richard Goedeken                              *
 # *   Copyright (C) 2007-2008 DarkJeztr Tillin9                             *
@@ -119,12 +119,21 @@ endif
 # base CFLAGS, LDLIBS, and LDFLAGS
 OPTFLAGS ?= -O3
 WARNFLAGS ?= -Wall
-CFLAGS += $(OPTFLAGS) $(WARNFLAGS) -fvisibility=hidden -I../../
+CFLAGS += $(OPTFLAGS) $(WARNFLAGS) -fvisibility=hidden -I../../ -mstackrealign
 CPPFLAGS += -DM64P_PLUGIN_API
 LDFLAGS += $(SHARED)
 
 ifeq ($(CPU), X86)
-  CFLAGS += -mmmx -msse -msse2
+  ifeq ($(SSE), SSE2)
+    CFLAGS   += -msse2
+    CPPFLAGS += -DARCH_MIN_SSE2
+#   POSTFIX = -sse2
+  endif
+  ifeq ($(SSE), SSSE3)
+    CFLAGS   += -mssse3
+    CPPFLAGS += -DARCH_MIN_SSSE3
+#   POSTFIX = -ssse3
+  endif
 endif
 
 # Since we are building a shared library, we must compile with -fPIC on some architectures
@@ -275,6 +284,8 @@ targets:
 	@echo "    PIC=(1|0)     == Force enable/disable of position independent code"
 	@echo "    HLEVIDEO=(1|0) == Move task of gfx emulation to a HLE video plugins"
 	@echo "    POSTFIX=name  == String added to the name of the the build (default: '')"
+	@echo "    SSE=version   == Optimize for SSE technology version"
+	@echo "                     (none [default on non-x86], SSE2 [default on x86], SSSE3)"
 	@echo "  Install Options:"
 	@echo "    PREFIX=path   == install/uninstall prefix (default: /usr/local)"
 	@echo "    LIBDIR=path   == library prefix (default: PREFIX/lib)"
