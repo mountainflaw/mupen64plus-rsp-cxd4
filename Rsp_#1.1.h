@@ -10,6 +10,7 @@ extern "C" {
 #define PLUGIN_TYPE_AUDIO           3
 #define PLUGIN_TYPE_CONTROLLER      4
 
+#if !defined(M64P_PLUGIN_API)
 /*
  * slight changes to zilmar's spec file for portability
  *
@@ -26,6 +27,7 @@ struct HMENU__ {int unused;};
 typedef struct HMENU__ *HMENU;
 struct HDC__ {int unused;};
 typedef struct HDC__ *HDC;
+#endif
 
 #if defined(_STDINT_H) || defined(M64P_PLUGIN_API)
 typedef uint32_t RCPREG;
