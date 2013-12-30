@@ -209,7 +209,7 @@ EXPORT int CALL RomOpen(void)
     update_conf(CFG_FILE);
     return 1;
 }
-#endif
+#else
 
 EXPORT void CALL CloseDLL(void)
 {
@@ -254,6 +254,9 @@ EXPORT void CALL DllConfig(HWND hParent)
     fclose(stream);
     return;
 }
+
+#endif
+
 EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
 {
     if (*RSP.SP_STATUS_REG & 0x00000003)

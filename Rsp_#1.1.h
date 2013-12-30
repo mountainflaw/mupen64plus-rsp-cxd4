@@ -117,6 +117,7 @@ typedef struct {
 #endif
 #endif
 
+#if !defined(M64P_PLUGIN_API)
 /******************************************************************
   Function: CloseDLL
   Purpose:  This function is called when the emulator is closing
@@ -152,6 +153,7 @@ EXPORT void CALL DllConfig(HWND hParent);
   output:   none
 *******************************************************************/ 
 EXPORT void CALL DllTest(HWND hParent);
+#endif
 
 /******************************************************************
   Function: DoRspCycles

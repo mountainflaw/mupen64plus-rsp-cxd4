@@ -162,7 +162,7 @@ const char* notice_starting =
 const char* notice_finished =
     "Finished writing benchmark results.\n"\
     "Check working emulator directory for \"sp_bench.txt\".";
-
+#if !defined(M64P_PLUGIN_API)
 EXPORT void CALL DllTest(HWND hParent)
 {
     FILE* log;
@@ -196,4 +196,5 @@ EXPORT void CALL DllTest(HWND hParent)
     message(notice_finished, 1);
     return;
 }
+#endif
 #endif
