@@ -164,6 +164,9 @@ endif
 ifeq ($(OS), FREEBSD)
   LDLIBS += -lc
 endif
+ifeq ($(OS), LINUX)
+  LDLIBS += -ldl
+endif
 ifeq ($(OS), OSX)
   # Select the proper SDK
   # Also, SDKs are stored in a different location since XCode 4.3
