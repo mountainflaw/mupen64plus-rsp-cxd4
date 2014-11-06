@@ -15,6 +15,8 @@
 #ifndef _RSP_H_
 #define _RSP_H_
 
+#include <stdint.h>
+
 #include "Rsp_#1.1.h"
 RSP_INFO RSP;
 
@@ -40,8 +42,10 @@ RSP_INFO RSP;
 #endif
 
 typedef unsigned char byte;
+extern uint32_t inst;
 
 #if !defined(M64P_PLUGIN_API)
+
 NOINLINE void message(const char* body, int priority)
 { /* Avoid SHELL32/ADVAPI32/USER32 dependencies by using standard C to print. */
     char argv[4096] = "CMD /Q /D /C \"TITLE RSP Message&&ECHO ";
