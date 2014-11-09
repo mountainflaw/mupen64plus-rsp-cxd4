@@ -48,7 +48,7 @@ typedef __int64                 i64;
 typedef signed __int64          s64;
 typedef unsigned __int64        u64;
 
-#elif (__STDC_VERSION__ >= 199901L)
+#elif (__STDC_VERSION__ >= 199901L) | !defined(__STDC_VERSION__)
 
 #include <stdint.h>
 

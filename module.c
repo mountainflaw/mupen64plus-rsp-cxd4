@@ -1,6 +1,7 @@
 /******************************************************************************\
+* Project:  Module Subsystem Interface to SP Interpreter Core                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2013.12.12                                                         *
+* Release:  2014.10.09                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -11,16 +12,15 @@
 * with this software.                                                          *
 * If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.             *
 \******************************************************************************/
-#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <inttypes.h>
 #include <string.h>
-#include "Rsp_#1.1.h"
-#include "rsp.h"
-#include "bench.h"
+
+#include "module.h"
+#include "su.h"
+
+RSP_INFO RSP;
 
 #define RSP_CXD4_VERSION 0x0101
 
@@ -191,7 +191,7 @@ EXPORT m64p_error CALL PluginGetVersion(m64p_plugin_type *PluginType, int *Plugi
         *APIVersion = RSP_PLUGIN_API_VERSION;
 
     if (PluginNamePtr != NULL)
-        *PluginNamePtr = DLL_name;
+        *PluginNamePtr = "Static Interpreter";
 
     if (Capabilities != NULL)
     {
@@ -209,30 +209,28 @@ EXPORT int CALL RomOpen(void)
     update_conf(CFG_FILE);
     return 1;
 }
+
 #else
+
+static const char DLL_about[] =
+    "RSP Interpreter by Iconoclast&&ECHO."\
+    "&&ECHO "\
+    "Thanks for test RDP:  Jabo, ziggy, angrylion\n"\
+    "RSP driver examples:  bpoint, zilmar, Ville Linde";
 
 EXPORT void CALL CloseDLL(void)
 {
     RSP.RDRAM = NULL; /* so DllTest benchmark doesn't think ROM is still open */
     return;
 }
-static const char DLL_about[] =
-    "RSP Interpreter by Iconoclast&&ECHO."\
-    "&&ECHO "\
-    "Thanks for test RDP:  Jabo, ziggy, angrylion\n"\
-    "RSP driver examples:  bpoint, zilmar, Ville Linde\n"\
-    "Helpful shenanigans:  mudlord, MarathonMan, Garteal";
 EXPORT void CALL DllAbout(HWND hParent)
 {
     hParent = NULL;
-    message(DLL_about, 3);
+    message(DLL_about);
     return;
 }
 EXPORT void CALL DllConfig(HWND hParent)
 {
-    FILE* stream;
-    register int PC;
-
     hParent = NULL;
     system("sp_cfgui"); /* This launches an EXE by default (if not, BAT/CMD). */
     update_conf(CFG_FILE);
@@ -240,18 +238,6 @@ EXPORT void CALL DllConfig(HWND hParent)
         return;
 
     export_SP_memory();
-    trace_RSP_registers();
-    stream = fopen("rsp_task.txt", "w");
-    fprintf(stream, "off   inst             disassembled\n");
-    fprintf(stream, "--- -------- --------------------------------\n");
-    for (PC = 0; PC < 4096; PC += 4)
-    {
-        const uint32_t inst = *(uint32_t *)(RSP.IMEM + PC);
-
-        disassemble(inst);
-        fprintf(stream, "%03X %08"PRIX32" %s\n", PC, inst, disasm);
-    }
-    fclose(stream);
     return;
 }
 
@@ -261,7 +247,7 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
 {
     if (*RSP.SP_STATUS_REG & 0x00000003)
     {
-        message("SP_STATUS_HALT", 3);
+        message("SP_STATUS_HALT");
         return 0x00000000;
     }
     switch (*(unsigned int *)(RSP.DMEM + 0xFC0))
@@ -282,7 +268,7 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
             }
             if (*RSP.DPC_STATUS_REG & 0x00000002) /* DPC_STATUS_FREEZE */
             {
-                message("DPC_CLR_FREEZE", 2);
+                message("DPC_CLR_FREEZE");
                 *RSP.DPC_STATUS_REG &= ~0x00000002;
             }
             return 0;
@@ -305,18 +291,18 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
     run_task();
     return (cycles);
 }
+
 EXPORT void CALL GetDllInfo(PLUGIN_INFO *PluginInfo)
 {
     PluginInfo -> Version = 0x0101; /* zilmar #1.1 (only standard RSP spec) */
     PluginInfo -> Type = PLUGIN_TYPE_RSP;
 strcpy(
-    PluginInfo -> Name, DLL_name);
+    PluginInfo -> Name, "Static Interpreter");
     PluginInfo -> NormalMemory = 0;
     PluginInfo -> MemoryBswaped = 1;
     return;
 }
 
-RCPREG* CR[16];
 EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
 {
     if (CycleCount != NULL) /* cycle-accuracy not doable with today's hosts */
@@ -326,7 +312,7 @@ EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
     if (Rsp_Info.DMEM == Rsp_Info.IMEM) /* usually dummy RSP data for testing */
         return; /* DMA is not executed just because plugin initiates. */
     while (Rsp_Info.IMEM != Rsp_Info.DMEM + 4096)
-        message("Virtual host map noncontiguity.", 3);
+        message("Virtual host map noncontiguity.");
 
     RSP = Rsp_Info;
     *RSP.SP_PC_REG = 0x04001000 & 0x00000FFF; /* task init bug on Mupen64 */
@@ -351,5 +337,179 @@ EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
 EXPORT void CALL RomClosed(void)
 {
     *RSP.SP_PC_REG = 0x00000000;
+    return;
+}
+
+#if !defined(M64P_PLUGIN_API)
+
+NOINLINE void message(const char* body)
+{ /* Avoid SHELL32/ADVAPI32/USER32 dependencies by using standard C to print. */
+    char argv[4096] = "CMD /Q /D /C \"TITLE RSP Message&&ECHO ";
+    int i = 0;
+    int j = strlen(argv);
+
+/*
+ * I'm just using system() to call the Windows command shell to print text.
+ * When the subsystem permits, use printf to trace messages, not this crap.
+ * I don't use WIN32 MessageBox because that's just extra OS dependencies. :P
+ */
+    while (body[i] != '\0')
+    {
+        if (body[i] == '\n')
+        {
+            strcat(argv, "&&ECHO ");
+            ++i;
+            j += 7;
+            continue;
+        }
+        argv[j++] = body[i++];
+    }
+    strcat(argv, "&&PAUSE&&EXIT\"");
+    system(argv);
+    return;
+}
+#else
+NOINLINE void message(const char* body)
+{
+    printf("%s\n", body);
+}
+#endif
+
+#if !defined(M64P_PLUGIN_API)
+NOINLINE void update_conf(const char* source)
+{
+    FILE* stream;
+    char line[CHARACTERS_PER_LINE] = "";
+    char key[CHARACTERS_PER_LINE], value[CHARACTERS_PER_LINE];
+    register int i, test;
+
+    stream = fopen(source, "r");
+    if (stream == NULL)
+    { /* try GetModulePath or whatever to correct the path? */
+        message("Failed to read config.");
+        return;
+    }
+    do
+    {
+        int bvalue;
+
+        line[0] = '\0';
+        key[0] = '\0';
+        value[0] = '\0';
+        for (i = 0; i < CHARACTERS_PER_LINE; i++)
+        {
+            test = fgetc(stream);
+            if (test < 0) /* either EOF or invalid ASCII characters */
+                break;
+            line[i] = (char)(test);
+            if (line[i] == '\n')
+                break;
+        }
+        line[i] = '\0';
+
+        for (i = 0; i < CHARACTERS_PER_LINE && line[i] != '='; i++);
+        line[i] = '\0';
+        strcpy(key, line);
+        strcpy(value, line + i + 1);
+
+        bvalue = atoi(value);
+        if (strcmp(key, "DisplayListToGraphicsPlugin") == 0)
+            CFG_HLE_GFX = (u8)(bvalue);
+        else if (strcmp(key, "AudioListToAudioPlugin") == 0)
+            CFG_HLE_AUD = (u8)(bvalue);
+        else if (strcmp(key, "WaitForCPUHost") == 0)
+            CFG_WAIT_FOR_CPU_HOST = bvalue;
+        else if (strcmp(key, "SupportCPUSemaphoreLock") == 0)
+            CFG_MEND_SEMAPHORE_LOCK = bvalue;
+    } while (test >= 0);
+    fclose(stream);
+    return;
+}
+#endif
+
+#ifdef SP_EXECUTE_LOG
+void step_SP_commands(uint32_t inst)
+{
+    if (output_log)
+    {
+        const char digits[16] = {
+            '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
+        };
+        char text[256];
+        char offset[4] = "";
+        char code[9] = "";
+        unsigned char endian_swap[4];
+
+        endian_swap[00] = (unsigned char)(inst >> 24);
+        endian_swap[01] = (unsigned char)(inst >> 16);
+        endian_swap[02] = (unsigned char)(inst >>  8);
+        endian_swap[03] = (unsigned char)inst;
+        offset[00] = digits[(*RSP.SP_PC_REG & 0xF00) >> 8];
+        offset[01] = digits[(*RSP.SP_PC_REG & 0x0F0) >> 4];
+        offset[02] = digits[(*RSP.SP_PC_REG & 0x00F) >> 0];
+        code[00] = digits[(inst & 0xF0000000) >> 28];
+        code[01] = digits[(inst & 0x0F000000) >> 24];
+        code[02] = digits[(inst & 0x00F00000) >> 20];
+        code[03] = digits[(inst & 0x000F0000) >> 16];
+        code[04] = digits[(inst & 0x0000F000) >> 12];
+        code[05] = digits[(inst & 0x00000F00) >>  8];
+        code[06] = digits[(inst & 0x000000F0) >>  4];
+        code[07] = digits[(inst & 0x0000000F) >>  0];
+        strcpy(text, offset);
+        strcat(text, "\n");
+        strcat(text, code);
+        message(text); /* PC offset, MIPS hex. */
+        if (output_log == NULL) {} else /* Global pointer not updated?? */
+            fwrite(endian_swap, 4, 1, output_log);
+    }
+}
+#endif
+
+NOINLINE void export_data_cache(void)
+{
+    FILE* out;
+    register uint32_t addr;
+
+    out = fopen("rcpcache.dhex", "wb");
+#if (0)
+    for (addr = 0x00000000; addr < 0x00001000; addr += 0x00000001)
+        fputc(RSP.DMEM[BES(addr & 0x00000FFF)], out);
+#else
+    for (addr = 0x00000000; addr < 0x00001000; addr += 0x00000004)
+    {
+        fputc(RSP.DMEM[addr + 0x000 + BES(0x000)], out);
+        fputc(RSP.DMEM[addr + 0x001 + MES(0x000)], out);
+        fputc(RSP.DMEM[addr + 0x002 - MES(0x000)], out);
+        fputc(RSP.DMEM[addr + 0x003 - BES(0x000)], out);
+    }
+#endif
+    fclose(out);
+    return;
+}
+NOINLINE void export_instruction_cache(void)
+{
+    FILE* out;
+    register uint32_t addr;
+
+    out = fopen("rcpcache.ihex", "wb");
+#if (0)
+    for (addr = 0x00000000; addr < 0x00001000; addr += 0x00000001)
+        fputc(RSP.IMEM[BES(addr & 0x00000FFF)], out);
+#else
+    for (addr = 0x00000000; addr < 0x00001000; addr += 0x00000004)
+    {
+        fputc(RSP.IMEM[addr + 0x000 + BES(0x000)], out);
+        fputc(RSP.IMEM[addr + 0x001 + MES(0x000)], out);
+        fputc(RSP.IMEM[addr + 0x002 - MES(0x000)], out);
+        fputc(RSP.IMEM[addr + 0x003 - BES(0x000)], out);
+    }
+#endif
+    fclose(out);
+    return;
+}
+void export_SP_memory(void)
+{
+    export_data_cache();
+    export_instruction_cache();
     return;
 }
