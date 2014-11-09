@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  Standard Integer Type Definitions                                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2014.10.09                                                         *
+* Release:  2014.10.10                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
