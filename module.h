@@ -1,6 +1,7 @@
 /******************************************************************************\
+* Project:  Module Subsystem Interface to SP Interpreter Core                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2013.12.04                                                         *
+* Release:  2014.10.13                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -11,48 +12,16 @@
 * with this software.                                                          *
 * If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.             *
 \******************************************************************************/
-#define _CRT_SECURE_NO_WARNINGS
-/*
- * This is only here for people using modern Microsoft compilers.
- * Usually the default warning level complains over "deprecated" CRT methods.
- * It's basically Microsoft's way of saying they're better than everyone.
- */
 
-#define MINIMUM_MESSAGE_PRIORITY    1
-#define EXTERN_COMMAND_LIST_GBI
-#define EXTERN_COMMAND_LIST_ABI
-#define SEMAPHORE_LOCK_CORRECTIONS
-#define WAIT_FOR_CPU_HOST
-#define EMULATE_STATIC_PC
+#ifndef _MODULE_H_
+#define _MODULE_H_
 
-#ifdef EMULATE_STATIC_PC
-#define CONTINUE    {continue;}
-#define JUMP        {goto BRANCH;}
-#else
-#define CONTINUE    {break;}
-#define JUMP        {break;}
-#endif
+#include "my_types.h"
 
-#if (0)
-#define SP_EXECUTE_LOG
-#define VU_EMULATE_SCALAR_ACCUMULATOR_READ
-#endif
+#include "Rsp_#1.1.h"
 
-const char DLL_name[100] = "Static Interpreter";
+#define CFG_FILE    "rsp_conf.bin"
 
-static unsigned char conf[32];
-#define CFG_FILE    "rsp_conf.cfg"
-/*
- * The config file used to be a 32-byte EEPROM with binary settings storage.
- * It was found necessary for user and contributor convenience to replace.
- *
- * The current configuration system now uses Garteal's CFG text definitions.
- */
-
-#define CFG_HLE_GFX     (conf[0x00])
-#define CFG_HLE_AUD     (conf[0x01])
-#define CFG_HLE_VID     (conf[0x02]) /* reserved/unused */
-#define CFG_HLE_JPG     (conf[0x03]) /* unused */
 /*
  * Most of the point behind this config system is to let users use HLE video
  * or audio plug-ins.  The other task types are used less than 1% of the time
@@ -61,6 +30,10 @@ static unsigned char conf[32];
  * on a few of these special task types was done by Hacktarux in the MUPEN64
  * HLE RSP plug-in, so consider using that instead for complete HLE.
  */
+#define CFG_HLE_GFX     (conf[0x00])
+#define CFG_HLE_AUD     (conf[0x01])
+#define CFG_HLE_VID     (conf[0x02]) /* reserved/unused */
+#define CFG_HLE_JPG     (conf[0x03]) /* unused */
 
 /*
  * Schedule binary dump exports to the DllConfig schedule delay queue.
@@ -81,3 +54,41 @@ static unsigned char conf[32];
 #define CFG_WAIT_FOR_CPU_HOST       (*(int *)(conf + 0x10))
 #define CFG_MEND_SEMAPHORE_LOCK     (*(int *)(conf + 0x14))
 #define CFG_TRACE_RSP_REGISTERS     (*(int *)(conf + 0x18))
+
+/*
+ * Update RSP configuration memory from local file resource.
+ */
+#define CHARACTERS_PER_LINE     (80)
+/* typical standard DOS text file limit per line */
+
+NOINLINE extern void update_conf(const char* source);
+
+NOINLINE extern void export_data_cache(void);
+NOINLINE extern void export_instruction_cache(void);
+
+NOINLINE extern void message(const char* body);
+
+#ifdef SP_EXECUTE_LOG
+static FILE *output_log;
+extern void step_SP_commands(u32 inst);
+#endif
+extern void export_SP_memory(void);
+
+/*
+ * low-level recreations of the C standard library functions for operating
+ * systems that define a C run-time or dependency on top of fixed OS calls
+ */
+NOINLINE extern void* my_calloc(size_t size);
+NOINLINE extern void my_free(void* ptr);
+NOINLINE extern size_t my_strlen(const char* str);
+NOINLINE extern char* my_strcpy(char* destination, const char* source);
+NOINLINE extern char* my_strcat(char* destination, const char* source);
+NOINLINE extern int my_system(char* command);
+NOINLINE extern FILE* my_fopen(const char * filename, const char* mode);
+NOINLINE extern int my_fclose(FILE* stream);
+NOINLINE extern size_t my_fread(
+    void* ptr, size_t size, size_t count, FILE* stream);
+NOINLINE extern size_t my_fwrite(
+    void* ptr, size_t size, size_t count, FILE* stream);
+
+#endif
