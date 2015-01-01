@@ -12,6 +12,10 @@ extern "C" {
 #define PLUGIN_TYPE_AUDIO           3
 #define PLUGIN_TYPE_CONTROLLER      4z
 
+#ifndef PLUGIN_API_VERSION
+#define PLUGIN_API_VERSION      0x0101
+#endif
+
 struct a_struct__ {int unused;};
 typedef struct a_struct__* struct_p;
 typedef struct {
