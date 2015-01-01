@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  MSP Emulation Layer for Vector Unit Computational Operations       *
 * Authors:  Iconoclast                                                         *
-* Release:  2014.10.17                                                         *
+* Release:  2014.12.13                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -76,7 +76,7 @@ ALIGNED extern i16 V_result[N];
 #ifdef ARCH_MIN_SSE2
 typedef __m128i v16;
 #else
-typedef short * v16;
+typedef pi16 v16;
 #endif
 
 #ifdef ARCH_MIN_SSE2
@@ -221,7 +221,7 @@ VECTOR_EXTERN (*COP2_C2[8*7 + 8])(v16, v16);
  * for shuffling said vector into a new vector temporary register,
  * ST = VR[vt], should be pretty convenient.
  */
-INLINE extern VECTOR_OPERATION SHUFFLE_VECTOR(v16 VD, const int e);
+INLINE VECTOR_EXTERN SHUFFLE_VECTOR(v16 VD, const int e);
 
 /*
  * Many vector units have pairs of "vector condition flags" registers.

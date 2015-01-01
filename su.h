@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  Basic MIPS R4000 Instruction Set for Scalar Unit Operations        *
 * Authors:  Iconoclast                                                         *
-* Release:  2014.10.17                                                         *
+* Release:  2014.12.25                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -17,10 +17,8 @@
 #define _SU_H_
 
 #include <stdio.h>
-
 #include "my_types.h"
-
-#include "Rsp_#1.1.h"
+#include "rsp.h"
 
 #define EXTERN_COMMAND_LIST_GBI
 #define EXTERN_COMMAND_LIST_ABI
@@ -36,10 +34,12 @@
 #define GET_RSP_INFO(member)    (RSP_INFO_NAME.member)
 #define GET_RCP_REG(member)     (*RSP_INFO_NAME.member)
 
+extern int CPU_running;
+
 extern RSP_INFO RSP_INFO_NAME;
-extern u8* DRAM;
-extern u8* DMEM;
-extern u8* IMEM;
+extern pu8 DRAM;
+extern pu8 DMEM;
+extern pu8 IMEM;
 
 extern u8 conf[32];
 
@@ -60,11 +60,11 @@ extern i32 SR[32];
 #define FIT_IMEM(PC)    (PC & 0xFFF & 0xFFC)
 
 #ifdef EMULATE_STATIC_PC
-#define CONTINUE    {continue;}
-#define JUMP        {goto BRANCH;}
+#define CONTINUE    continue
+#define JUMP        goto BRANCH
 #else
-#define CONTINUE    {break;}
-#define JUMP        {break;}
+#define CONTINUE    break
+#define JUMP        break
 #endif
 
 #ifdef EMULATE_STATIC_PC
@@ -87,16 +87,16 @@ extern short MFC0_count[32];
 #define LINK_OFF    (BASE_OFF + 0x004)
 extern void set_PC(int address);
 
-#if (0)
-#define MASK_SA(sa) (sa & 31)
+#if (0x7FFFFFFFul >> 037 != 0x7FFFFFFFul >> ~0U)
+#define MASK_SA(sa) (sa & 037)
 /* Force masking in software. */
 #else
 #define MASK_SA(sa) (sa)
 /* Let hardware architecture do the mask for us. */
 #endif
 
-#define SR_B(s, i)      (*(i8 *)(((i8 *)(SR + s)) + BES(i)))
-#define SR_S(s, i)      (*(i16 *)(((i8 *)(SR + s)) + HES(i)))
+#define SR_B(s, i)      (*(pi8)(((pi8)(SR + s)) + BES(i)))
+#define SR_S(s, i)      (*(pi16)(((pi8)(SR + s)) + HES(i)))
 #define SE(x, b)        (-(x & (1 << b)) | (x & ~(~0 << b)))
 #define ZE(x, b)        (+(x & (1 << b)) | (x & ~(~0 << b)))
 
@@ -111,14 +111,14 @@ extern void set_PC(int address);
  * Universal byte-access macro for 16*8 halfword vectors.
  * Use this macro if you are not sure whether the element is odd or even.
  */
-#define VR_B(vt,element)    (*(i8 *)((i8 *)(VR[vt]) + MES(element)))
+#define VR_B(vt,element)    (*(pi8)((pi8)(VR[vt]) + MES(element)))
 
 /*
  * Optimized byte-access macros for the vector registers.
  * Use these ONLY if you know the element is even (or odd in the second).
  */
-#define VR_A(vt,element)    (*(i8 *)((i8 *)(VR[vt]) + element + MES(0x0)))
-#define VR_U(vt,element)    (*(i8 *)((i8 *)(VR[vt]) + element - MES(0x0)))
+#define VR_A(vt,element)    (*(pi8)((pi8)(VR[vt]) + element + MES(0x0)))
+#define VR_U(vt,element)    (*(pi8)((pi8)(VR[vt]) + element - MES(0x0)))
 
 /*
  * Optimized halfword-access macro for indexing eight-element vectors.
@@ -126,7 +126,7 @@ extern void set_PC(int address);
  *
  * If the four-bit element is odd, then there is no solution in one hit.
  */
-#define VR_S(vt,element)    (*(i16 *)((i8 *)(VR[vt]) + element))
+#define VR_S(vt,element)    (*(pi16)((pi8)(VR[vt]) + element))
 
 /*** Scalar, Coprocessor Operations (system control) ***/
 #define SP_STATUS_HALT          (0x00000001 <<  0)
@@ -145,22 +145,22 @@ extern void set_PC(int address);
 #define SP_STATUS_SIG6          (0x00000001 << 13)
 #define SP_STATUS_SIG7          (0x00000001 << 14)
 
-extern u32* CR[16];
+extern pu32 CR[16];
 
 extern void SP_DMA_READ(void);
 extern void SP_DMA_WRITE(void);
 
 /*** shared states between the scalar and vector units ***/
-extern unsigned short get_VCO(void);
-extern unsigned short get_VCC(void);
-extern unsigned char get_VCE(void);
-extern void set_VCO(unsigned short VCO);
-extern void set_VCC(unsigned short VCC);
-extern void set_VCE(unsigned char VCE);
-extern short vce[8];
+extern u16 get_VCO(void);
+extern u16 get_VCC(void);
+extern u8 get_VCE(void);
+extern void set_VCO(u16 VCO);
+extern void set_VCC(u16 VCC);
+extern void set_VCE(u8 VCE);
+extern i16 vce[8];
 
-extern unsigned short rwR_VCE(void);
-extern void rwW_VCE(unsigned short VCE);
+extern u16 rwR_VCE(void);
+extern void rwW_VCE(u16 VCE);
 
 extern void MFC2(int rt, int vs, int e);
 extern void MTC2(int rt, int vd, int e);
@@ -185,53 +185,180 @@ extern void USW(int rs, u32 addr);
 
 NOINLINE extern void res_S(void);
 
-NOINLINE extern void MFC0(int rt, int rd);
+extern void SP_CP0_MF(int rt, int rd);
+
+/*
+ * example syntax (basically the same for all LWC2/SWC2 ops):
+ * LTWV    $v0[0], -64($at)
+ * SBV     $v0[9], 0xFFE($0)
+ */
+typedef void(*mwc2_func)(int vt, int element, signed int offset, int base);
+
+extern mwc2_func LWC2[2 * 8*2];
+extern mwc2_func SWC2[2 * 8*2];
+
+NOINLINE void res_lsw(int vt, int element, signed int offset, int base);
 
 /*** Scalar, Coprocessor Operations (vector unit, scalar cache transfers) ***/
-INLINE extern void LBV(int vt, int element, int offset, int base);
-INLINE extern void LSV(int vt, int element, int offset, int base);
-INLINE extern void LLV(int vt, int element, int offset, int base);
-INLINE extern void LDV(int vt, int element, int offset, int base);
-INLINE extern void SBV(int vt, int element, int offset, int base);
-INLINE extern void SSV(int vt, int element, int offset, int base);
-INLINE extern void SLV(int vt, int element, int offset, int base);
-INLINE extern void SDV(int vt, int element, int offset, int base);
+extern void LBV(int vt, int element, signed int offset, int base);
+extern void LSV(int vt, int element, signed int offset, int base);
+extern void LLV(int vt, int element, signed int offset, int base);
+extern void LDV(int vt, int element, signed int offset, int base);
+extern void SBV(int vt, int element, signed int offset, int base);
+extern void SSV(int vt, int element, signed int offset, int base);
+extern void SLV(int vt, int element, signed int offset, int base);
+extern void SDV(int vt, int element, signed int offset, int base);
 
 /*
  * Group II vector loads and stores:
  * PV and UV (As of RCP implementation, XV and ZV are reserved opcodes.)
  */
-INLINE extern void LPV(int vt, int element, int offset, int base);
-INLINE extern void LUV(int vt, int element, int offset, int base);
-INLINE extern void SPV(int vt, int element, int offset, int base);
-INLINE extern void SUV(int vt, int element, int offset, int base);
+extern void LPV(int vt, int element, signed int offset, int base);
+extern void LUV(int vt, int element, signed int offset, int base);
+extern void SPV(int vt, int element, signed int offset, int base);
+extern void SUV(int vt, int element, signed int offset, int base);
 
 /*
  * Group III vector loads and stores:
  * HV, FV, and AV (As of RCP implementation, AV opcodes are reserved.)
  */
-NOINLINE extern void LHV(int vt, int element, int offset, int base);
-NOINLINE extern void LFV(int vt, int element, int offset, int base);
-NOINLINE extern void SHV(int vt, int element, int offset, int base);
-NOINLINE extern void SFV(int vt, int element, int offset, int base);
+extern void LHV(int vt, int element, signed int offset, int base);
+extern void LFV(int vt, int element, signed int offset, int base);
+extern void SHV(int vt, int element, signed int offset, int base);
+extern void SFV(int vt, int element, signed int offset, int base);
 
 /*
  * Group IV vector loads and stores:
  * QV and RV
  */
-INLINE extern void LQV(int vt, int element, int offset, int base);
-NOINLINE extern void LRV(int vt, int element, int offset, int base);
-INLINE extern void SQV(int vt, int element, int offset, int base);
-NOINLINE extern void SRV(int vt, int element, int offset, int base);
+extern void LQV(int vt, int element, signed int offset, int base);
+extern void LRV(int vt, int element, signed int offset, int base);
+extern void SQV(int vt, int element, signed int offset, int base);
+extern void SRV(int vt, int element, signed int offset, int base);
 
 /*
  * Group V vector loads and stores
  * TV and SWV (As of RCP implementation, LTWV opcode was undesired.)
  */
-INLINE extern void LTV(int vt, int element, int offset, int base);
-NOINLINE extern void SWV(int vt, int element, int offset, int base);
-INLINE extern void STV(int vt, int element, int offset, int base);
+extern void LTV(int vt, int element, signed int offset, int base);
+extern void SWV(int vt, int element, signed int offset, int base);
+extern void STV(int vt, int element, signed int offset, int base);
 
 NOINLINE extern void run_task(void);
+
+/*
+ * Unfortunately, SSE machine code takes up so much space in the instruction
+ * cache when populated enough in something like an interpreter switch
+ * statement, that the compiler starts looking for ways to create branches
+ * and jumps where the C code specifies none.  This complex set of macros
+ * is intended to minimize the compiler's obligation to choose doing this
+ * since SSE2 has no static shuffle operation with a variable mask operand.
+ */
+#ifdef ARCH_MIN_SSE2
+#define EXECUTE_VU() { target = *(v16 *)VR[vt]; \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_0Q() { \
+    target = _mm_shufflehi_epi16(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(00, 00, 02, 02)), SHUFFLE(04, 04, 06, 06)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_1Q() { \
+    target = _mm_shufflehi_epi16(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(01, 01, 03, 03)), SHUFFLE(05, 05, 07, 07)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_0H() { \
+    target = _mm_shufflehi_epi16(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(00, 00, 00, 00)), SHUFFLE(04, 04, 04, 04)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_1H() { \
+    target = _mm_shufflehi_epi16(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(01, 01, 01, 01)), SHUFFLE(05, 05, 05, 05)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_2H() { \
+    target = _mm_shufflehi_epi16(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(02, 02, 02, 02)), SHUFFLE(06, 06, 06, 06)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_3H() { \
+    target = _mm_shufflehi_epi16(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(03, 03, 03, 03)), SHUFFLE(07, 07, 07, 07)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_0W() { \
+    target = _mm_shuffle_epi32(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(00, 00, 00, 00)), SHUFFLE(0/2, 0/2, 0/2, 0/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_1W() { \
+    target = _mm_shuffle_epi32(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(01, 01, 01, 01)), SHUFFLE(1/2, 1/2, 1/2, 1/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_2W() { \
+    target = _mm_shuffle_epi32(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(02, 02, 02, 02)), SHUFFLE(2/2, 2/2, 2/2, 2/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_3W() { \
+    target = _mm_shuffle_epi32(_mm_shufflelo_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(03, 03, 03, 03)), SHUFFLE(3/2, 3/2, 3/2, 3/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_4W() { \
+    target = _mm_shuffle_epi32(_mm_shufflehi_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(04, 04, 04, 04)), SHUFFLE(4/2, 4/2, 4/2, 4/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_5W() { \
+    target = _mm_shuffle_epi32(_mm_shufflehi_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(05, 05, 05, 05)), SHUFFLE(5/2, 5/2, 5/2, 5/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_6W() { \
+    target = _mm_shuffle_epi32(_mm_shufflehi_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(06, 06, 06, 06)), SHUFFLE(6/2, 6/2, 6/2, 6/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#define EXECUTE_VU_7W() { \
+    target = _mm_shuffle_epi32(_mm_shufflehi_epi16(*(v16 *)VR[vt], \
+        SHUFFLE(07, 07, 07, 07)), SHUFFLE(7/2, 7/2, 7/2, 7/2)); \
+    *(v16 *)(VR[vd]) = vector_op(source, target); }
+#else
+#define EXECUTE_VU() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x0); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_0Q() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x2); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_1Q() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x3); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_0H() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x4); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_1H() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x5); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_2H() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x6); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_3H() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x7); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_0W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x8); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_1W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0x9); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_2W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0xA); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_3W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0xB); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_4W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0xC); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_5W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0xD); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_6W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0xE); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#define EXECUTE_VU_7W() { \
+    vector_copy(target, VR[vt]); SHUFFLE_VECTOR(target, 0xF); \
+    vector_op(source, target); vector_copy(VR[vd], V_result); }
+#endif
 
 #endif

@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  Standard Integer Type Definitions                                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2014.10.17                                                         *
+* Release:  2014.12.15                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -16,6 +16,10 @@
 #ifndef _MY_TYPES_H_
 #define _MY_TYPES_H_
 
+typedef char                    i8;
+typedef signed char             s8;
+typedef unsigned char           u8;
+
 /*
  * Use three procedures for standard integer type definitions from C.
  *     1.  If compiling with MSVC, use Microsoft's LLP64 fixed-size types.
@@ -25,26 +29,15 @@
  *         MSFT compilers has the pro of not raising subtle C89 warnings.
  *     3.  If C99 support was not found, hope for a LP64 model and the best.
  *         Even C89 regulates that short >= 16b; int >= 16b; long >= 32b.
- *
- * While not specifying [un-]signed for non-char results in signed data types
- * as per current standards, some algorithms are best read with an emphasis
- * on the actual need for sign- or zero-extension, if not indifference.
  */
 #ifdef _MSC_VER
 
-typedef __int8                  i8;
-typedef signed __int8           s8;
-typedef unsigned __int8         u8;
-
-typedef __int16                 i16;
 typedef signed __int16          s16;
 typedef unsigned __int16        u16;
 
-typedef __int32                 i32;
 typedef signed __int32          s32;
 typedef unsigned __int32        u32;
 
-typedef __int64                 i64;
 typedef signed __int64          s64;
 typedef unsigned __int64        u64;
 
@@ -52,44 +45,92 @@ typedef unsigned __int64        u64;
 
 #include <stdint.h>
 
-typedef uint8_t                 u8;
 typedef uint16_t                u16;
 typedef uint32_t                u32;
 typedef uint64_t                u64;
 
-typedef int16_t                 i16;
-typedef int32_t                 i32;
-typedef int64_t                 i64;
-
-typedef i16                     s16;
-typedef i32                     s32;
-typedef i64                     s64;
-
-/*
- * Type `i8' should be neutral to signedness and representative of the
- * indifference as to whether implementations or optimizations sign or not.
- */
-typedef char                    i8;
-typedef int8_t                  s8;
+typedef int16_t                 s16;
+typedef int32_t                 s32;
+typedef int64_t                 s64;
 
 #else
 
-typedef char                    i8;
-typedef signed char             s8;
-typedef unsigned char           u8;
-
-typedef short                   i16;
 typedef signed short            s16;
 typedef unsigned short          u16;
 
-typedef int                     i32;
 typedef signed int              s32;
 typedef unsigned int            u32;
 
-typedef long                    i64;
 typedef signed long             s64;
 typedef unsigned long           u64;
 
+#endif
+
+/*
+ * Although most types are signed by default, using `int' instead of `signed
+ * int' and `i32' instead of `s32' can be preferable to denote cases where
+ * the signedness of something operated on is irrelevant to the algorithm.
+ */
+typedef s16                     i16;
+typedef s32                     i32;
+typedef s64                     i64;
+
+/*
+ * Single- and double-precision floating-point data types have a little less
+ * room for maintenance across different CPU processors, as the C standard
+ * just provides `float' and `[long] double'.
+ */
+typedef float                   f32;
+typedef double                  f64;
+
+/*
+ * Pointer types, serving as the memory reference address to the actual type.
+ * I thought this was useful to have due to the various reasons for declaring
+ * or using variable pointers in various styles and complex scenarios.
+ *     ex) i32* pointer;
+ *     ex) i32 * pointer;
+ *     ex) i32 *a, *b, *c;
+ *     neutral:  `pi32 pointer;' or `pi32 a, b, c;'
+ */
+typedef i8*                     pi8;
+typedef i16*                    pi16;
+typedef i32*                    pi32;
+typedef i64*                    pi64;
+
+typedef s8*                     ps8;
+typedef s16*                    ps16;
+typedef s32*                    ps32;
+typedef s64*                    ps64;
+
+typedef u8*                     pu8;
+typedef u16*                    pu16;
+typedef u32*                    pu32;
+typedef u64*                    pu64;
+
+typedef f32*                    pf32;
+typedef f64*                    pf64;
+typedef void*                   p_void;
+typedef void(*p_func)(void);
+
+/*
+ * helper macros with exporting functions for shared objects or dynamically
+ * loaded libraries
+ */
+#if defined(M64P_PLUGIN_API)
+#define M64P_PLUGIN_PROTOTYPES 1
+#include "m64p_types.h"
+#include "m64p_common.h"
+#include "m64p_plugin.h"
+#include "m64p_config.h"
+#include "osal_dynamiclib.h"
+#else
+#if defined(_WIN32)
+#define EXPORT      __declspec(dllexport)
+#define CALL        __cdecl
+#else
+#define EXPORT      __attribute__((visibility("default")))
+#define CALL
+#endif
 #endif
 
 /*

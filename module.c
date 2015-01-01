@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  Module Subsystem Interface to SP Interpreter Core                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2014.10.14                                                         *
+* Release:  2014.12.08                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -228,14 +228,14 @@ EXPORT void CALL CloseDLL(void)
     return;
 }
 
-EXPORT void CALL DllAbout(struct_p hParent)
+EXPORT void CALL DllAbout(p_void hParent)
 {
     hParent = NULL;
     message(DLL_about);
     return;
 }
 
-EXPORT void CALL DllConfig(struct_p hParent)
+EXPORT void CALL DllConfig(p_void hParent)
 {
     hParent = NULL; /* unused */
     my_system("sp_cfgui");
@@ -257,14 +257,14 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
         return 0x00000000;
     }
 
-    switch (*(i32 *)(DMEM + 0xFC0))
+    switch (*(pi32)(DMEM + 0xFC0))
     { /* Simulation barrier to redirect processing externally. */
 #ifdef EXTERN_COMMAND_LIST_GBI
         case 0x00000001:
             if (CFG_HLE_GFX == 0)
                 break;
 
-            if (*(i32 *)(DMEM + 0xFF0) == 0x00000000)
+            if (*(pi32)(DMEM + 0xFF0) == 0x00000000)
                 break; /* Resident Evil 2, null task pointers */
             if (GET_RSP_INFO(ProcessDlistList) == NULL)
                 { /* branch */ }
@@ -307,7 +307,7 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
 
 EXPORT void CALL GetDllInfo(PLUGIN_INFO *PluginInfo)
 {
-    PluginInfo -> Version = 0x0101; /* zilmar #1.1 (only standard RSP spec) */
+    PluginInfo -> Version = PLUGIN_API_VERSION;
     PluginInfo -> Type = PLUGIN_TYPE_RSP;
     my_strcpy(PluginInfo -> Name, "Static Interpreter");
     PluginInfo -> NormalMemory = 0;
@@ -315,7 +315,7 @@ EXPORT void CALL GetDllInfo(PLUGIN_INFO *PluginInfo)
     return;
 }
 
-EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, unsigned int *CycleCount)
+EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, pu32 CycleCount)
 {
     if (CycleCount != NULL) /* cycle-accuracy not doable with today's hosts */
         *CycleCount = 0x00000000;
@@ -375,7 +375,7 @@ NOINLINE void message(const char* body)
     char* argv;
     int i, j;
 
-    argv = my_calloc(4096);
+    argv = my_calloc(4096, 1);
     my_strcpy(argv, "CMD /Q /D /C \"TITLE RSP Message&&ECHO ");
     i = 0;
     j = my_strlen(argv);
@@ -395,6 +395,7 @@ NOINLINE void message(const char* body)
     my_free(argv);
 #else
     fputs(body, stdout);
+    putc('\n');
 #endif
     return;
 }
@@ -470,12 +471,12 @@ void step_SP_commands(uint32_t inst)
 
 NOINLINE void export_data_cache(void)
 {
-    u8* DMEM_swapped;
-    FILE* out;
+    pu8 DMEM_swapped;
+    FILE * out;
     register int i;
  /* const int little_endian = GET_RSP_INFO(MemoryBswaped); */
 
-    DMEM_swapped = my_calloc(4096);
+    DMEM_swapped = my_calloc(4096, 1);
     for (i = 0; i < 4096; i++)
         DMEM_swapped[i] = DMEM[BES(i)];
     out = my_fopen("rcpcache.dhex", "wb");
@@ -486,12 +487,12 @@ NOINLINE void export_data_cache(void)
 }
 NOINLINE void export_instruction_cache(void)
 {
-    u8* IMEM_swapped;
-    FILE* out;
+    pu8 IMEM_swapped;
+    FILE * out;
     register int i;
  /* const int little_endian = GET_RSP_INFO(MemoryBswaped); */
 
-    IMEM_swapped = my_calloc(4096);
+    IMEM_swapped = my_calloc(4096, 1);
     for (i = 0; i < 4096; i++)
         IMEM_swapped[i] = IMEM[BES(i)];
     out = my_fopen("rcpcache.ihex", "wb");
@@ -514,7 +515,8 @@ void export_SP_memory(void)
  * `DllMain' symbol or, alternatively, link with /NOENTRY for no entry point.
  */
 #ifdef WIN32
-int __stdcall DllMain(void* hModule, u32 ul_reason_for_call, void* lpReserved)
+BOOL WINAPI DllMain(
+    HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     hModule = lpReserved = NULL; /* unused */
     switch (ul_reason_for_call)
@@ -544,16 +546,16 @@ case 0: /* DLL_PROCESS_DETACH */
  * and to avoid std. lib run-time dependencies on certain operating systems.
  */
 
-NOINLINE void* my_calloc(size_t size)
+NOINLINE p_void my_calloc(size_t count, size_t size)
 {
 #ifdef WIN32
-    return GlobalAlloc(GPTR, size);
+    return GlobalAlloc(GPTR, size * count);
 #else
-    return calloc(size, 1);
+    return calloc(count, size);
 #endif
 }
 
-NOINLINE void my_free(void* ptr)
+NOINLINE void my_free(p_void ptr)
 {
 #ifdef WIN32
     HANDLE this_should_be_null;
@@ -666,7 +668,7 @@ NOINLINE int my_fclose(FILE* stream)
     return (ret_slot);
 }
 
-NOINLINE size_t my_fread(void* ptr, size_t size, size_t count, FILE* stream)
+NOINLINE size_t my_fread(p_void ptr, size_t size, size_t count, FILE* stream)
 {
 #ifdef WIN32
     DWORD ret_slot;
@@ -680,7 +682,7 @@ NOINLINE size_t my_fread(void* ptr, size_t size, size_t count, FILE* stream)
     return (size_t)(ret_slot);
 }
 
-NOINLINE size_t my_fwrite(void* ptr, size_t size, size_t count, FILE* stream)
+NOINLINE size_t my_fwrite(p_void ptr, size_t size, size_t count, FILE* stream)
 {
 #ifdef WIN32
     DWORD ret_slot;
