@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  Standard Integer Type Definitions                                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2014.12.08                                                         *
+* Release:  2014.12.15                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -111,6 +111,27 @@ typedef f32*                    pf32;
 typedef f64*                    pf64;
 typedef void*                   p_void;
 typedef void(*p_func)(void);
+
+/*
+ * helper macros with exporting functions for shared objects or dynamically
+ * loaded libraries
+ */
+#if defined(M64P_PLUGIN_API)
+#define M64P_PLUGIN_PROTOTYPES 1
+#include "m64p_types.h"
+#include "m64p_common.h"
+#include "m64p_plugin.h"
+#include "m64p_config.h"
+#include "osal_dynamiclib.h"
+#else
+#if defined(_WIN32)
+#define EXPORT      __declspec(dllexport)
+#define CALL        __cdecl
+#else
+#define EXPORT      __attribute__((visibility("default")))
+#define CALL
+#endif
+#endif
 
 /*
  * Optimizing compilers aren't necessarily perfect compilers, but they do
