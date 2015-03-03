@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  Module Subsystem Interface to SP Interpreter Core                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2014.12.08                                                         *
+* Release:  2015.01.30                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -217,8 +217,7 @@ EXPORT int CALL RomOpen(void)
 #else
 
 static const char DLL_about[] =
-    "RSP Interpreter by Iconoclast&&ECHO."\
-    "&&ECHO "\
+    "RSP Interpreter by Iconoclast\n"\
     "Thanks for test RDP:  Jabo, ziggy, angrylion\n"\
     "RSP driver examples:  bpoint, zilmar, Ville Linde";
 
@@ -395,7 +394,7 @@ NOINLINE void message(const char* body)
     my_free(argv);
 #else
     fputs(body, stdout);
-    putc('\n');
+    putchar('\n');
 #endif
     return;
 }
@@ -644,11 +643,11 @@ NOINLINE FILE* my_fopen(const char * filename, const char* mode)
         (mode[0] == 'r') ? GENERIC_READ : GENERIC_WRITE,
         (mode[0] == 'r') ? FILE_SHARE_READ : FILE_SHARE_WRITE,
         NULL,
-        CREATE_ALWAYS,
+        (mode[0] == 'r') ? OPEN_EXISTING : CREATE_ALWAYS,
 #if 0
         FILE_FLAG_WRITE_THROUGH | FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING,
 #else
-        FILE_FLAG_WRITE_THROUGH,
+        (mode[0] == 'r') ? FILE_ATTRIBUTE_NORMAL : FILE_FLAG_WRITE_THROUGH,
 #endif
         NULL
     );
