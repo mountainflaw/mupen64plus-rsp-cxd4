@@ -22,7 +22,16 @@ FLAGS_ANSI="\
     -mstackrealign \
     -Wall \
     -pedantic"
-FLAGS_x86="\
+FLAGS_x86_32="\
+    -O3 \
+    -masm=intel \
+    -DPLUGIN_API_VERSION=0x0101 \
+    -DARCH_MIN_SSE2 \
+    -march=native \
+    -mstackrealign \
+    -Wall \
+    -pedantic"
+FLAGS_x86_64="\
     -O3 \
     -masm=intel \
     -fPIC \
@@ -32,7 +41,7 @@ FLAGS_x86="\
     -mstackrealign \
     -Wall \
     -pedantic"
-C_FLAGS=$FLAGS_x86 # default since Intel SIMD was the most tested
+C_FLAGS=$FLAGS_x86_32 # default since Intel SIMD was the most tested
 
 echo Compiling C source code...
 cc -S $C_FLAGS -o $obj/module.s  $src/module.c
