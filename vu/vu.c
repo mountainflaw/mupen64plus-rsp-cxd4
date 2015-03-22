@@ -15,11 +15,11 @@
 
 #include "vu.h"
 
-#include "multiply.h"
 #include "add.h"
-#include "select.h"
-#include "logical.h"
 #include "divide.h"
+#include "logical.h"
+#include "multiply.h"
+#include "select.h"
 #if 0
 #include "pack.h"
 #endif
