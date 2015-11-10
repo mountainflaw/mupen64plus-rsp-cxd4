@@ -2024,7 +2024,7 @@ BRANCH:
  * Whether or not MMX has been executed in this emulator, here is a good time
  * to finally empty the MM state, at the end of a long interpreter loop.
  */
-#ifdef ARCH_MIN_SSE2
+#if defined (ARCH_MIN_SSE2) && !defined (__x86_64__)
     _mm_empty();
 #endif
 
