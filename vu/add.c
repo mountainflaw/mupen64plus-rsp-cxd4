@@ -161,10 +161,9 @@ INLINE static void do_abs(pi16 VD, pi16 VS, pi16 VT)
         neg[i]  = (VS[i] <  0x0000);
     for (i = 0; i < N; i++)
         pos[i]  = (VS[i] >  0x0000);
-    vector_wipe(nez);
 
     for (i = 0; i < N; i++)
-        nez[i] -= neg[i];
+        nez[i] = 0 - neg[i];
     for (i = 0; i < N; i++)
         nez[i] += pos[i];
 
