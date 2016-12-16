@@ -1,7 +1,7 @@
 /******************************************************************************\
 * Project:  Module Subsystem Interface to SP Interpreter Core                  *
 * Authors:  Iconoclast                                                         *
-* Release:  2016.03.23                                                         *
+* Release:  2016.11.05                                                         *
 * License:  CC0 Public Domain Dedication                                       *
 *                                                                              *
 * To the extent possible under law, the author(s) have dedicated all copyright *
@@ -253,7 +253,7 @@ EXPORT void CALL DllConfig(p_void hParent)
 
 #endif
 
-EXPORT u32 CALL DoRspCycles(u32 cycles)
+EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
 {
     OSTask_type task_type;
     register unsigned int i;
@@ -379,6 +379,17 @@ EXPORT void CALL GetDllInfo(PLUGIN_INFO *PluginInfo)
     return;
 }
 
+p_func GBI_phase;
+void no_LLE(void)
+{
+    static int already_warned;
+
+    if (already_warned)
+        return;
+    message("RSP configured for LLE but not using LLE graphics plugin.");
+    already_warned = TRUE;
+    return;
+}
 EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, pu32 CycleCount)
 {
     if (CycleCount != NULL) /* cycle-accuracy not doable with today's hosts */
@@ -414,6 +425,10 @@ EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, pu32 CycleCount)
 #if 1
     GET_RCP_REG(SP_PC_REG) &= 0x00000FFFu; /* hack to fix Mupen64 */
 #endif
+
+    GBI_phase = GET_RSP_INFO(ProcessRdpList);
+    if (GBI_phase == NULL)
+        GBI_phase = no_LLE;
     return;
 }
 
@@ -427,11 +442,9 @@ EXPORT void CALL RomClosed(void)
  * Sometimes the end user won't correctly install to the right directory. :(
  * If the config file wasn't installed correctly, politely shut errors up.
  */
-#if !defined(M64P_PLUGIN_API)
     stream = my_fopen(CFG_FILE, "wb");
     my_fwrite(conf, 8, 32 / 8, stream);
     my_fclose(stream);
-#endif
     return;
 }
 
@@ -462,18 +475,15 @@ NOINLINE void message(const char* body)
 #else
     fputs(body, stdout);
     putchar('\n');
+    puts("Press ENTER to return.");
+    getchar();
 #endif
     return;
 }
 #else
 NOINLINE void message(const char* body)
 {
-#if defined(M64P_PLUGIN_API)
-    DebugMessage(M64MSG_ERROR, body);
-#else
     printf("%s\n", body);
-#endif
-
 }
 #endif
 
