@@ -442,9 +442,11 @@ EXPORT void CALL RomClosed(void)
  * Sometimes the end user won't correctly install to the right directory. :(
  * If the config file wasn't installed correctly, politely shut errors up.
  */
+#if !defined(M64P_PLUGIN_API)
     stream = my_fopen(CFG_FILE, "wb");
     my_fwrite(conf, 8, 32 / 8, stream);
     my_fclose(stream);
+#endif
     return;
 }
 
@@ -483,7 +485,12 @@ NOINLINE void message(const char* body)
 #else
 NOINLINE void message(const char* body)
 {
+#if defined(M64P_PLUGIN_API)
+    DebugMessage(M64MSG_ERROR, body);
+#else
     printf("%s\n", body);
+#endif
+
 }
 #endif
 
