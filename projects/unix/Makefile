@@ -136,6 +136,11 @@ ifeq ($(CPU), X86)
   endif
 endif
 
+ifeq ($(NEON), 1)
+    CFLAGS   += -mfpu=neon
+    CPPFLAGS += -DUSE_SSE2NEON
+endif
+
 # Since we are building a shared library, we must compile with -fPIC on some architectures
 # On 32-bit x86 systems we do not want to use -fPIC because we don't have to and it has a big performance penalty on this arch
 ifeq ($(PIC), 1)
@@ -297,6 +302,7 @@ targets:
 	@echo "    POSTFIX=name  == String added to the name of the the build (default: '')"
 	@echo "    SSE=version   == Optimize for SSE technology version"
 	@echo "                     (none [default on non-x86], SSE2 [default on x86], SSSE3)"
+	@echo "    NEON=(1|0)    == Optimize for NEON technology version"
 	@echo "  Install Options:"
 	@echo "    PREFIX=path   == install/uninstall prefix (default: /usr/local)"
 	@echo "    LIBDIR=path   == library prefix (default: PREFIX/lib)"
