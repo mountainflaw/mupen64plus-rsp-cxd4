@@ -118,7 +118,7 @@ endif
 # base CFLAGS, LDLIBS, and LDFLAGS
 OPTFLAGS ?= -O3 -flto
 WARNFLAGS ?= -Wall
-CFLAGS += $(OPTFLAGS) $(WARNFLAGS) -fvisibility=hidden -I../../ -mstackrealign
+CFLAGS += $(OPTFLAGS) $(WARNFLAGS) -fvisibility=hidden -I../../
 CPPFLAGS += -DM64P_PLUGIN_API
 LDFLAGS += $(SHARED)
 
@@ -134,6 +134,7 @@ ifeq ($(CPU), X86)
     CPPFLAGS += -DARCH_MIN_SSSE3
     POSTFIX = -ssse3
   endif
+  CFLAGS += -mstackrealign
 endif
 
 ifeq ($(NEON), 1)
