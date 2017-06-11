@@ -59,6 +59,7 @@ NOINLINE void update_conf(const char* source)
     memset(conf, 0, sizeof(conf));
     m64p_rom_header ROM_HEADER;
     CoreDoCommand(M64CMD_ROM_GET_HEADER, sizeof(ROM_HEADER), &ROM_HEADER);
+
     if (strstr((char*)ROM_HEADER.Name, (const char*)"WORLD DRIVER CHAMP") != NULL)
         CFG_HLE_GFX = 0;
     else if (strstr((char*)ROM_HEADER.Name, (const char*)"Indiana Jones") != NULL)
@@ -75,9 +76,14 @@ NOINLINE void update_conf(const char* source)
         CFG_HLE_GFX = 0;
     else
         CFG_HLE_GFX = ConfigGetParamBool(l_ConfigRsp, "DisplayListToGraphicsPlugin");
+
     CFG_HLE_AUD = ConfigGetParamBool(l_ConfigRsp, "AudioListToAudioPlugin");
     CFG_WAIT_FOR_CPU_HOST = ConfigGetParamBool(l_ConfigRsp, "WaitForCPUHost");
-    CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
+
+    if (strstr((char*)ROM_HEADER.Name, (const char*)"NBA SHOWTIME") != NULL)
+        CFG_MEND_SEMAPHORE_LOCK = 1;
+    else
+        CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
 }
 
 static void DebugMessage(int level, const char *message, ...)
