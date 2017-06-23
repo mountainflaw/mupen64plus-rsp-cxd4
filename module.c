@@ -30,6 +30,7 @@ RSP_INFO RSP_INFO_NAME;
 
 #if defined(M64P_PLUGIN_API)
 
+#include <m64p_frontend.h>
 #include <stdarg.h>
 
 #define RSP_PLUGIN_API_VERSION 0x020000
@@ -51,15 +52,38 @@ ptr_ConfigGetParameter     ConfigGetParameter = NULL;
 ptr_ConfigSetDefaultFloat  ConfigSetDefaultFloat;
 ptr_ConfigSetDefaultBool   ConfigSetDefaultBool = NULL;
 ptr_ConfigGetParamBool     ConfigGetParamBool = NULL;
+ptr_CoreDoCommand          CoreDoCommand = NULL;
 
 NOINLINE void update_conf(const char* source)
 {
     memset(conf, 0, sizeof(conf));
+    m64p_rom_header ROM_HEADER;
+    CoreDoCommand(M64CMD_ROM_GET_HEADER, sizeof(ROM_HEADER), &ROM_HEADER);
 
-    CFG_HLE_GFX = ConfigGetParamBool(l_ConfigRsp, "DisplayListToGraphicsPlugin");
+    if (strstr((char*)ROM_HEADER.Name, (const char*)"WORLD DRIVER CHAMP") != NULL)
+        CFG_HLE_GFX = 0;
+    else if (strstr((char*)ROM_HEADER.Name, (const char*)"Indiana Jones") != NULL)
+        CFG_HLE_GFX = 0;
+    else if (strstr((char*)ROM_HEADER.Name, (const char*)"Rogue Squadron") != NULL)
+        CFG_HLE_GFX = 0;
+    else if (strstr((char*)ROM_HEADER.Name, (const char*)"rogue squadron") != NULL)
+        CFG_HLE_GFX = 0;
+    else if (strstr((char*)ROM_HEADER.Name, (const char*)"Battle for Naboo") != NULL)
+        CFG_HLE_GFX = 0;
+    else if (strstr((char*)ROM_HEADER.Name, (const char*)"Stunt Racer 64") != NULL)
+        CFG_HLE_GFX = 0;
+    else if (strstr((char*)ROM_HEADER.Name, (const char*)"GAUNTLET LEGENDS") != NULL)
+        CFG_HLE_GFX = 0;
+    else
+        CFG_HLE_GFX = ConfigGetParamBool(l_ConfigRsp, "DisplayListToGraphicsPlugin");
+
     CFG_HLE_AUD = ConfigGetParamBool(l_ConfigRsp, "AudioListToAudioPlugin");
     CFG_WAIT_FOR_CPU_HOST = ConfigGetParamBool(l_ConfigRsp, "WaitForCPUHost");
-    CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
+
+    if (strstr((char*)ROM_HEADER.Name, (const char*)"NBA SHOWTIME") != NULL)
+        CFG_MEND_SEMAPHORE_LOCK = 1;
+    else
+        CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
 }
 
 static void DebugMessage(int level, const char *message, ...)
@@ -118,6 +142,7 @@ EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Con
     ConfigSetDefaultFloat = (ptr_ConfigSetDefaultFloat) osal_dynlib_getproc(CoreLibHandle, "ConfigSetDefaultFloat");
     ConfigSetDefaultBool = (ptr_ConfigSetDefaultBool) osal_dynlib_getproc(CoreLibHandle, "ConfigSetDefaultBool");
     ConfigGetParamBool = (ptr_ConfigGetParamBool) osal_dynlib_getproc(CoreLibHandle, "ConfigGetParamBool");
+    CoreDoCommand = (ptr_CoreDoCommand) osal_dynlib_getproc(CoreLibHandle, "CoreDoCommand");
 
     if (!ConfigOpenSection || !ConfigDeleteSection || !ConfigSetParameter || !ConfigGetParameter ||
         !ConfigSetDefaultBool || !ConfigGetParamBool || !ConfigSetDefaultFloat)
