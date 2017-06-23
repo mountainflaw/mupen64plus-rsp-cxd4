@@ -184,9 +184,14 @@ EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Con
         bSaveConfig = 1;
     }
 
+#ifndef HLEVIDEO
+    int hlevideo = 0;
+#else
+    int hlevideo = 1;
+#endif
     /* set the default values for this plugin */
     ConfigSetDefaultFloat(l_ConfigRsp, "Version", CONFIG_PARAM_VERSION,  "Mupen64Plus cxd4 RSP Plugin config parameter version number");
-    ConfigSetDefaultBool(l_ConfigRsp, "DisplayListToGraphicsPlugin", 0, "Send display lists to the graphics plugin");
+    ConfigSetDefaultBool(l_ConfigRsp, "DisplayListToGraphicsPlugin", hlevideo, "Send display lists to the graphics plugin");
     ConfigSetDefaultBool(l_ConfigRsp, "AudioListToAudioPlugin", 0, "Send audio lists to the audio plugin");
     ConfigSetDefaultBool(l_ConfigRsp, "WaitForCPUHost", 0, "Force CPU-RSP signals synchronization");
     ConfigSetDefaultBool(l_ConfigRsp, "SupportCPUSemaphoreLock", 0, "Support CPU-RSP semaphore lock");
