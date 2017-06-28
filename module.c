@@ -79,11 +79,7 @@ NOINLINE void update_conf(const char* source)
 
     CFG_HLE_AUD = ConfigGetParamBool(l_ConfigRsp, "AudioListToAudioPlugin");
     CFG_WAIT_FOR_CPU_HOST = ConfigGetParamBool(l_ConfigRsp, "WaitForCPUHost");
-
-    if (strstr((char*)ROM_HEADER.Name, (const char*)"NBA SHOWTIME") != NULL)
-        CFG_MEND_SEMAPHORE_LOCK = 1;
-    else
-        CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
+    CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
 }
 
 static void DebugMessage(int level, const char *message, ...)
