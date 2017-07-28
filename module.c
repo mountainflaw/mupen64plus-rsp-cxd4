@@ -64,10 +64,6 @@ NOINLINE void update_conf(const char* source)
         CFG_HLE_GFX = 0;
     else if (strstr((char*)ROM_HEADER.Name, (const char*)"Indiana Jones") != NULL)
         CFG_HLE_GFX = 0;
-    else if (strstr((char*)ROM_HEADER.Name, (const char*)"Rogue Squadron") != NULL)
-        CFG_HLE_GFX = 0;
-    else if (strstr((char*)ROM_HEADER.Name, (const char*)"rogue squadron") != NULL)
-        CFG_HLE_GFX = 0;
     else if (strstr((char*)ROM_HEADER.Name, (const char*)"Battle for Naboo") != NULL)
         CFG_HLE_GFX = 0;
     else if (strstr((char*)ROM_HEADER.Name, (const char*)"Stunt Racer 64") != NULL)
