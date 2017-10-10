@@ -456,8 +456,6 @@ EXPORT void CALL InitiateRSP(RSP_INFO Rsp_Info, pu32 CycleCount)
 
 EXPORT void CALL RomClosed(void)
 {
-    FILE* stream;
-
     GET_RCP_REG(SP_PC_REG) = 0x04001000;
 
 /*
@@ -465,7 +463,7 @@ EXPORT void CALL RomClosed(void)
  * If the config file wasn't installed correctly, politely shut errors up.
  */
 #if !defined(M64P_PLUGIN_API)
-    stream = my_fopen(CFG_FILE, "wb");
+    FILE* stream = my_fopen(CFG_FILE, "wb");
     my_fwrite(conf, 8, 32 / 8, stream);
     my_fclose(stream);
 #endif
