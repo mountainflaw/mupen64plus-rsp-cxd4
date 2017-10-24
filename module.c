@@ -68,8 +68,6 @@ NOINLINE void update_conf(const char* source)
         CFG_HLE_GFX = 0;
     else if (strstr((char*)ROM_HEADER.Name, (const char*)"Stunt Racer 64") != NULL)
         CFG_HLE_GFX = 0;
-    else if (strstr((char*)ROM_HEADER.Name, (const char*)"GAUNTLET LEGENDS") != NULL)
-        CFG_HLE_GFX = 0;
     else
         CFG_HLE_GFX = ConfigGetParamBool(l_ConfigRsp, "DisplayListToGraphicsPlugin");
 
