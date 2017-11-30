@@ -232,6 +232,7 @@ ifeq ($(DEBUG),1)
   CFLAGS += -g
   INSTALL_STRIP_FLAG ?= 
 else
+  CFLAGS += -DNDEBUG
   INSTALL_STRIP_FLAG ?= -s
 endif
 
