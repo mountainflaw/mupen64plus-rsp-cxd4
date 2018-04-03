@@ -21,6 +21,10 @@
 #include <windows.h>
 #endif
 
+#ifdef __APPLE__
+#import <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include "module.h"
 #include "su.h"
 
@@ -713,6 +717,9 @@ NOINLINE int my_system(char* command)
     WaitForSingleObject(info_process.hProcess, INFINITE);
     CloseHandle(info_process.hProcess);
     CloseHandle(info_process.hThread);
+#elif TARGET_OS_IPHONE || TARGET_OS_TV
+	// system not available in iOS
+	ret_slot = 0;
 #else
     ret_slot = system(command);
 #endif
