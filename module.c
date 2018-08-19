@@ -314,10 +314,17 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
         GET_RCP_REG(SP_STATUS_REG) |=
             SP_STATUS_SIG2 | SP_STATUS_BROKE | SP_STATUS_HALT
         ;
+#if defined(M64P_PLUGIN_API)
         if (GET_RSP_INFO(ProcessDlistList) == NULL)
             { /* branch */ }
         else
             GET_RSP_INFO(ProcessDlistList)();
+#else
+        if (GET_RSP_INFO(ProcessDList) == NULL)
+            { /* branch */ }
+        else
+            GET_RSP_INFO(ProcessDList)();
+#endif
 
         if ((GET_RCP_REG(SP_STATUS_REG) & SP_STATUS_INTR_BREAK) && (GET_RCP_REG(SP_STATUS_REG) & (SP_STATUS_SIG2 | SP_STATUS_BROKE | SP_STATUS_HALT))) {
             GET_RCP_REG(MI_INTR_REG) |= 0x00000001;
@@ -329,10 +336,17 @@ EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
         if (CFG_HLE_AUD == 0)
             break;
 
+#if defined(M64P_PLUGIN_API)
         if (GET_RSP_INFO(ProcessAlistList) == NULL)
             { /* branch */ }
         else
             GET_RSP_INFO(ProcessAlistList)();
+#else
+        if (GET_RSP_INFO(ProcessAList) == NULL)
+            { /* branch */ }
+        else
+            GET_RSP_INFO(ProcessAList)();
+#endif
 
         GET_RCP_REG(SP_STATUS_REG) |=
             SP_STATUS_SIG2 | SP_STATUS_BROKE | SP_STATUS_HALT
