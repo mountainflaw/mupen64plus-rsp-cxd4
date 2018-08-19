@@ -74,7 +74,7 @@ ptr_CoreDoCommand          CoreDoCommand = NULL;
 
 NOINLINE void update_conf(const char* source)
 {
-    memset(conf, 0, sizeof(conf));
+    memset(conf, 0, 32);
     m64p_rom_header ROM_HEADER;
     CoreDoCommand(M64CMD_ROM_GET_HEADER, sizeof(ROM_HEADER), &ROM_HEADER);
 
