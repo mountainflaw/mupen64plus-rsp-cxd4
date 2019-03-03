@@ -31,6 +31,12 @@
 #include <signal.h>
 #include <setjmp.h>
 
+#if defined(__GNUC__)
+#define ATTR_FMT(fmtpos, attrpos) __attribute__ ((format (printf, fmtpos, attrpos)))
+#else
+#define ATTR_FMT(fmtpos, attrpos)
+#endif
+
 static jmp_buf CPU_state;
 static void seg_av_handler(int signal_code)
 {
@@ -83,7 +89,9 @@ NOINLINE void update_conf(const char* source)
     CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
 }
 
-static void DebugMessage(int level, const char *message, ...)
+static void DebugMessage(int level, const char *message, ...) ATTR_FMT(2, 3);
+
+void DebugMessage(int level, const char *message, ...)
 {
   char msgbuf[1024];
   va_list args;
@@ -540,7 +548,7 @@ NOINLINE void message(const char* body)
 NOINLINE void message(const char* body)
 {
 #if defined(M64P_PLUGIN_API)
-    DebugMessage(M64MSG_ERROR, body);
+    DebugMessage(M64MSG_ERROR, "%s", body);
 #else
     printf("%s\n", body);
 #endif
