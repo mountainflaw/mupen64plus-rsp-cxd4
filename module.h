@@ -66,6 +66,9 @@ typedef enum {
 #define CFG_MEND_SEMAPHORE_LOCK     (*(pi32)(conf + 0x14))
 #define CFG_TRACE_RSP_REGISTERS     (*(pi32)(conf + 0x18))
 
+#define CFG_DBG_LOG_GFX      (*(pi32)(conf + 0x22))
+#define CFG_DBG_LOG_SFX      (*(pi32)(conf + 0x26))
+
 /*
  * Update RSP configuration memory from local file resource.
  */

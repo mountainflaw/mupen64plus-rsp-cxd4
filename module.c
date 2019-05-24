@@ -87,6 +87,8 @@ NOINLINE void update_conf(const char* source)
     CFG_HLE_AUD = ConfigGetParamBool(l_ConfigRsp, "AudioListToAudioPlugin");
     CFG_WAIT_FOR_CPU_HOST = ConfigGetParamBool(l_ConfigRsp, "WaitForCPUHost");
     CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
+    CFG_DBG_LOG_GFX = ConfigGetParamBool(l_ConfigRsp, "LogGfxCmd");
+    CFG_DBG_LOG_SFX = ConfigGetParamBool(l_ConfigRsp, "LogSfxCmd");
 }
 
 static void DebugMessage(int level, const char *message, ...) ATTR_FMT(2, 3);
@@ -192,6 +194,9 @@ EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Con
     ConfigSetDefaultBool(l_ConfigRsp, "WaitForCPUHost", 0, "Force CPU-RSP signals synchronization");
     ConfigSetDefaultBool(l_ConfigRsp, "SupportCPUSemaphoreLock", 0, "Support CPU-RSP semaphore lock");
 
+    ConfigSetDefaultBool(l_ConfigRsp, "LogGfxCmd", 0, "Log graphics task opcodes");
+    ConfigSetDefaultBool(l_ConfigRsp, "LogSfxCmd", 0, "Log sound task opcodes");
+
     l_PluginInit = 1;
     return M64ERR_SUCCESS;
 }
@@ -276,11 +281,12 @@ EXPORT void CALL DllConfig(p_void hParent)
 
 #endif
 
+OSTask_type task_type;
+
 EXPORT unsigned int CALL DoRspCycles(unsigned int cycles)
 {
     static char task_debug[] = "unknown task type:  0x????????";
     char* task_debug_type;
-    OSTask_type task_type;
     register unsigned int i;
 
     if (GET_RCP_REG(SP_STATUS_REG) & 0x00000003) {

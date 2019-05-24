@@ -29,6 +29,8 @@ u32 inst_word;
 u32 SR[NUMBER_OF_SCALAR_REGISTERS];
 typedef VECTOR_OPERATION(*p_vector_func)(v16, v16);
 
+extern OSTask_type task_type;
+
 pu8 DRAM;
 pu8 DMEM;
 pu8 IMEM;
@@ -51,6 +53,21 @@ void set_PC(unsigned int address)
 
 pu32 CR[NUMBER_OF_CP0_REGISTERS];
 u8 conf[32];
+
+inline static void printhlelist(int reg)
+{
+    if (task_type == 1 && CFG_DBG_LOG_GFX) {
+        if (reg == 25) {
+            printf("gfx: %08X %08X\n", SR[25], SR[24]);
+        }
+    }
+
+    if (task_type == 2 && CFG_DBG_LOG_SFX) {
+        if (reg == 25) {
+            printf("sfx: %08X %08X\n", SR[25], SR[24]);
+        }
+    }
+}
 
 int MF_SP_STATUS_TIMEOUT;
 
@@ -385,6 +402,8 @@ PROFILE_MODE void ADDIU(u32 inst)
     const unsigned int rs = (inst >> 21) % (1 << 5);
     const unsigned int rt = (inst >> 16) % (1 << 5);
 
+    printhlelist(rt);
+
     SR[rt] = SR[rs] + (s16)(immediate);
     SR[zero] = 0x00000000;
 }
@@ -442,6 +461,8 @@ PROFILE_MODE void LW(u32 inst)
     const s16 offset = (s16)(inst & 0x0000FFFFul);
     const unsigned int base = (inst >> 21) % (1 << 5);
     const unsigned int rt   = (inst >> 16) % (1 << 5);
+
+    printhlelist(rt);
 
     addr = SR[base] + offset;
     SR_B(rt, 0) = DMEM[BES(addr + 0) & 0x00000FFFul];
