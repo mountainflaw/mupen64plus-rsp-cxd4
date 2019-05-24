@@ -14,6 +14,7 @@
 \******************************************************************************/
 
 #include "multiply.h"
+#include "../cycle.h"
 
 #ifdef ARCH_MIN_SSE2
 
@@ -50,6 +51,7 @@ static INLINE void SIGNED_CLAMP_AM(pi16 VD)
         VD[i] |= -(hi[i] ^ 0);
     for (i = 0; i < N; i++)
         VD[i] ^= 0x8000 * (hi[i] | lo[i]);
+    cycle += CYCLES_SU_COMMON;
 }
 
 static INLINE void UNSIGNED_CLAMP(pi16 VD)
@@ -65,6 +67,7 @@ static INLINE void UNSIGNED_CLAMP(pi16 VD)
         VD[i] = temp[i] & ~(temp[i] >> 15); /* Only this clamp is unsigned. */
     for (i = 0; i < N; i++)
         VD[i] = VD[i] | cond[i];
+    cycle += CYCLES_SU_COMMON;
 }
 
 static INLINE void SIGNED_CLAMP_AL(pi16 VD)
@@ -80,6 +83,7 @@ static INLINE void SIGNED_CLAMP_AL(pi16 VD)
         temp[i] ^= 0x8000; /* clamps 0x0000:0xFFFF instead of -0x8000:+0x7FFF */
     for (i = 0; i < N; i++)
         VD[i] = (cond[i] ? temp[i] : VACC_L[i]);
+    cycle += CYCLES_SU_COMMON;
 }
 #endif
 
@@ -132,6 +136,7 @@ VECTOR_OPERATION VMULF(v16 vs, v16 vt)
 
     negative = _mm_xor_si128(negative, vs);
     *(v16 *)VACC_H = negative; /* 2*i16*i16 only fills L/M; VACC_H = 0 or ~0. */
+    cycle += CYCLES_SU_COMMON;
     return _mm_add_epi16(vs, prod_hi); /* prod_hi must be -32768; - 1 = +32767 */
 #else
     word_64 product[N]; /* (-32768 * -32768)<<1 + 32768 confuses 32-bit type. */
@@ -150,6 +155,7 @@ VECTOR_OPERATION VMULF(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] = -(product[i].SW < 0); /* product>>32 & 0xFFFF */
     SIGNED_CLAMP_AM(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -194,6 +200,7 @@ VECTOR_OPERATION VMULU(v16 vs, v16 vt)
 
     prod_lo = _mm_srai_epi16(prod_hi, 15); /* unsigned overflow mask */
     vs = _mm_or_si128(prod_hi, prod_lo);
+    cycle += CYCLES_SU_COMMON;
     return _mm_andnot_si128(negative, vs); /* unsigned underflow mask */
 #else
     word_64 product[N]; /* (-32768 * -32768)<<1 + 32768 confuses 32-bit type. */
@@ -212,6 +219,7 @@ VECTOR_OPERATION VMULU(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] = -(product[i].SW < 0); /* product>>32 & 0xFFFF */
     UNSIGNED_CLAMP(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -223,6 +231,7 @@ VECTOR_OPERATION VMUDL(v16 vs, v16 vt)
     *(v16 *)VACC_L = vs;
     *(v16 *)VACC_M = vt;
     *(v16 *)VACC_H = vt;
+    cycle += CYCLES_SU_COMMON;
     return (vs); /* no possibilities to clamp */
 #else
     word_32 product[N];
@@ -235,6 +244,7 @@ VECTOR_OPERATION VMUDL(v16 vs, v16 vt)
     vector_copy(V_result, VACC_L);
     vector_wipe(VACC_M);
     vector_wipe(VACC_H);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -259,6 +269,7 @@ VECTOR_OPERATION VMUDM(v16 vs, v16 vt)
     vs = prod_hi;
     prod_hi = _mm_srai_epi16(prod_hi, 15);
     *(v16 *)VACC_H = prod_hi;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     word_32 product[N];
@@ -273,6 +284,7 @@ VECTOR_OPERATION VMUDM(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] = -(VACC_M[i] < 0);
     vector_copy(V_result, VACC_M);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -296,6 +308,7 @@ VECTOR_OPERATION VMUDN(v16 vs, v16 vt)
     *(v16 *)VACC_M = prod_hi;
     prod_hi = _mm_srai_epi16(prod_hi, 15);
     *(v16 *)VACC_H = prod_hi;
+    cycle += CYCLES_SU_COMMON;
     return (prod_lo);
 #else
     word_32 product[N];
@@ -310,6 +323,7 @@ VECTOR_OPERATION VMUDN(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] = -(VACC_M[i] < 0);
     vector_copy(V_result, VACC_L);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -336,6 +350,7 @@ VECTOR_OPERATION VMUDH(v16 vs, v16 vt)
  * Re-interleave or pack both 32-bit products in both xmm registers with
  * signed saturation:  prod < -32768 to -32768 and prod > +32767 to +32767.
  */
+    cycle += CYCLES_SU_COMMON;
     return _mm_packs_epi32(vs, vt);
 #else
     word_32 product[N];
@@ -349,6 +364,7 @@ VECTOR_OPERATION VMUDH(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] = (s16)(product[i].W >> 16); /* product[i].HW[HES(2) >> 1] */
     SIGNED_CLAMP_AM(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -392,6 +408,7 @@ VECTOR_OPERATION VMACF(v16 vs, v16 vt)
 
     vt = _mm_unpackhi_epi16(acc_md, acc_hi);
     vs = _mm_unpacklo_epi16(acc_md, acc_hi);
+    cycle += CYCLES_SU_COMMON;
     return _mm_packs_epi32(vs, vt);
 #else
     word_32 product[N], addend[N];
@@ -416,6 +433,7 @@ VECTOR_OPERATION VMACF(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] += addend[i].UW >> 16;
     SIGNED_CLAMP_AM(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -462,6 +480,7 @@ VECTOR_OPERATION VMACU(v16 vs, v16 vt)
     vs = _mm_packs_epi32(vs, vt);
     overflow = _mm_cmplt_epi16(acc_md, vs);
     vs = _mm_andnot_si128(_mm_srai_epi16(vs, 15), vs);
+    cycle += CYCLES_SU_COMMON;
     return _mm_or_si128(vs, overflow);
 #else
     word_32 product[N], addend[N];
@@ -486,6 +505,7 @@ VECTOR_OPERATION VMACU(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] += addend[i].UW >> 16;
     UNSIGNED_CLAMP(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -539,6 +559,7 @@ VECTOR_OPERATION VMADL(v16 vs, v16 vt)
     vs = _mm_and_si128(vs, acc_md); /* ... ? VS_clamped : 0x0000 */
     vs = _mm_or_si128(vs, acc_lo); /*                   : acc_lo */
     acc_md = _mm_slli_epi16(acc_md, 15); /* ... ? ^ 0x8000 : ^ 0x0000 */
+    cycle += CYCLES_SU_COMMON;
     return _mm_xor_si128(vs, acc_md); /* stupid unsigned-clamp-ish adjustment */
 #else
     word_32 product[N], addend[N];
@@ -559,6 +580,7 @@ VECTOR_OPERATION VMADL(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] += addend[i].UW >> 16;
     SIGNED_CLAMP_AL(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -600,6 +622,7 @@ VECTOR_OPERATION VMADM(v16 vs, v16 vt)
 
     vt = _mm_unpackhi_epi16(acc_md, acc_hi);
     vs = _mm_unpacklo_epi16(acc_md, acc_hi);
+    cycle += CYCLES_SU_COMMON;
     return _mm_packs_epi32(vs, vt);
 #else
     word_32 product[N], addend[N];
@@ -620,6 +643,7 @@ VECTOR_OPERATION VMADM(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] += addend[i].UW >> 16;
     SIGNED_CLAMP_AM(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -679,6 +703,7 @@ VECTOR_OPERATION VMADN(v16 vs, v16 vt)
     vs = _mm_and_si128(vs, acc_md); /* ... ? VS_clamped : 0x0000 */
     vs = _mm_or_si128(vs, acc_lo); /*                   : acc_lo */
     acc_md = _mm_slli_epi16(acc_md, 15); /* ... ? ^ 0x8000 : ^ 0x0000 */
+    cycle += CYCLES_SU_COMMON;
     return _mm_xor_si128(vs, acc_md); /* stupid unsigned-clamp-ish adjustment */
 #else
     word_32 product[N], addend[N];
@@ -699,6 +724,7 @@ VECTOR_OPERATION VMADN(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] += addend[i].UW >> 16;
     SIGNED_CLAMP_AL(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }
 
@@ -736,6 +762,7 @@ VECTOR_OPERATION VMADH(v16 vs, v16 vt)
     vs = *(v16 *)VACC_M;
     prod_high = _mm_unpackhi_epi16(vs, vt);
     vs        = _mm_unpacklo_epi16(vs, vt);
+    cycle += CYCLES_SU_COMMON;
     return _mm_packs_epi32(vs, prod_high);
 #else
     word_32 product[N], addend[N];
@@ -750,5 +777,6 @@ VECTOR_OPERATION VMADH(v16 vs, v16 vt)
     for (i = 0; i < N; i++)
         VACC_H[i] += (addend[i].UW >> 16) + (product[i].SW >> 16);
     SIGNED_CLAMP_AM(V_result);
+    cycle += CYCLES_SU_COMMON;
 #endif
 }

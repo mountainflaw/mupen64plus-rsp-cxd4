@@ -14,6 +14,7 @@
 \******************************************************************************/
 
 #include "select.h"
+#include "../cycle.h"
 
 /*
  * vector select merge (`VMRG`) formula
@@ -42,6 +43,7 @@ static void merge(pi16 VD, pi16 cmp, pi16 pass, pi16 fail)
     for (i = 0; i < N; i++)
         VD[i] = fail[i] + cmp[i]*diff[i]; /* actually `(cmp[i] != 0)*diff[i]` */
 #endif
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -70,6 +72,7 @@ INLINE static void do_lt(pi16 VD, pi16 VS, pi16 VT)
     vector_wipe(cf_co);
 
     vector_wipe(cf_clip);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -116,6 +119,7 @@ INLINE static void do_ne(pi16 VD, pi16 VS, pi16 VT)
     vector_wipe(cf_co);
 
     vector_wipe(cf_clip);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -144,6 +148,7 @@ INLINE static void do_ge(pi16 VD, pi16 VS, pi16 VT)
     vector_wipe(cf_co);
 
     vector_wipe(cf_clip);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -218,6 +223,7 @@ INLINE static void do_cl(pi16 VD, pi16 VS, pi16 VT)
 
  /* CTC2    $0, $vce # zeroing RSP flags VCF[2] */
     vector_wipe(cf_vce);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -289,6 +295,7 @@ INLINE static void do_ch(pi16 VD, pi16 VS, pi16 VT)
     for (i = 0; i < N; i++)
         cf_ne[i] = eq[i] ^ 1;
     vector_copy(cf_co, sn);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -334,6 +341,7 @@ INLINE static void do_cr(pi16 VD, pi16 VS, pi16 VT)
 
  /* CTC2    $0, $vce # zeroing RSP flags VCF[2] */
     vector_wipe(cf_vce);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -341,6 +349,7 @@ INLINE static void do_mrg(pi16 VD, pi16 VS, pi16 VT)
 {
     merge(VACC_L, cf_comp, VS, VT);
     vector_copy(VD, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -362,9 +371,11 @@ VECTOR_OPERATION VLT(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -387,9 +398,11 @@ VECTOR_OPERATION VEQ(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -412,9 +425,11 @@ VECTOR_OPERATION VNE(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -437,9 +452,11 @@ VECTOR_OPERATION VGE(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -462,9 +479,11 @@ VECTOR_OPERATION VCL(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -487,9 +506,11 @@ VECTOR_OPERATION VCH(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -512,9 +533,11 @@ VECTOR_OPERATION VCR(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -537,9 +560,11 @@ VECTOR_OPERATION VMRG(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }

@@ -14,7 +14,7 @@
 \******************************************************************************/
 
 #include "vu.h"
-
+#include "../cycle.h"
 #include "multiply.h"
 #include "add.h"
 #include "select.h"
@@ -50,8 +50,11 @@ VECTOR_OPERATION res_V(v16 vs, v16 vt)
     return (vt = vs); /* -Wunused-but-set-parameter */
 #else
     vector_wipe(V_result);
-    if (vt == vs)
+    if (vt == vs) {
+        cycle += CYCLES_SU_COMMON;
         return; /* -Wunused-but-set-parameter */
+    }
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -60,9 +63,11 @@ VECTOR_OPERATION res_M(v16 vs, v16 vt)
     message("VMUL IQ");
 #ifdef ARCH_MIN_SSE2
     vs = res_V(vs, vt);
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     res_V(vs, vt);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -106,6 +111,7 @@ u16 get_VCO(void)
       | (cf_co[0x2 % 8] << 0x2)
       | (cf_co[0x1 % 8] << 0x1)
       | (cf_co[0x0 % 8] << 0x0);
+    cycle += CYCLES_SU_COMMON;
     return (vco); /* Big endian becomes little. */
 }
 u16 get_VCC(void)
@@ -129,6 +135,7 @@ u16 get_VCC(void)
       | (cf_comp[0x2 % 8] << 0x2)
       | (cf_comp[0x1 % 8] << 0x1)
       | (cf_comp[0x0 % 8] << 0x0);
+    cycle += CYCLES_SU_COMMON;
     return (vcc); /* Big endian becomes little. */
 }
 u8 get_VCE(void)
@@ -147,6 +154,7 @@ u8 get_VCE(void)
       | (cf_vce[0x0] << 0x0)
     ;
     vce = (u8)(result & 0xFF);
+    cycle += CYCLES_SU_COMMON;
     return (vce); /* Big endian becomes little. */
 }
 #else
@@ -166,6 +174,7 @@ u16 get_VCO(void)
 
     xmm = _mm_packs_epi16(lo, hi); /* Decompress INT16 Booleans to INT8 ones. */
     vco = _mm_movemask_epi8(xmm) & 0x0000FFFF; /* PMOVMSKB combines each MSB. */
+    cycle += CYCLES_SU_COMMON;
     return (vco);
 }
 u16 get_VCC(void)
@@ -184,6 +193,7 @@ u16 get_VCC(void)
 
     xmm = _mm_packs_epi16(lo, hi); /* Decompress INT16 Booleans to INT8 ones. */
     vcc = _mm_movemask_epi8(xmm) & 0x0000FFFF; /* PMOVMSKB combines each MSB. */
+    cycle += CYCLES_SU_COMMON;
     return (vcc);
 }
 u8 get_VCE(void)
@@ -198,6 +208,7 @@ u8 get_VCE(void)
 
     xmm = _mm_packs_epi16(lo, hi); /* Decompress INT16 Booleans to INT8 ones. */
     vce = _mm_movemask_epi8(xmm) & 0x000000FF; /* PMOVMSKB combines each MSB. */
+    cycle += CYCLES_SU_COMMON;
     return (vce);
 }
 #endif
@@ -214,6 +225,7 @@ void set_VCO(u16 vco)
         cf_co[i] = (vco >> (i + 0x0)) & 1;
     for (i = 0; i < N; i++)
         cf_ne[i] = (vco >> (i + 0x8)) & 1;
+    cycle += CYCLES_SU_COMMON;
     return; /* Little endian becomes big. */
 }
 void set_VCC(u16 vcc)
@@ -224,6 +236,7 @@ void set_VCC(u16 vcc)
         cf_comp[i] = (vcc >> (i + 0x0)) & 1;
     for (i = 0; i < N; i++)
         cf_clip[i] = (vcc >> (i + 0x8)) & 1;
+    cycle += CYCLES_SU_COMMON;
     return; /* Little endian becomes big. */
 }
 void set_VCE(u8 vce)
@@ -232,5 +245,6 @@ void set_VCE(u8 vce)
 
     for (i = 0; i < N; i++)
         cf_vce[i] = (vce >> i) & 1;
+    cycle += CYCLES_SU_COMMON;
     return; /* Little endian becomes big. */
 }

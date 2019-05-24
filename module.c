@@ -197,7 +197,7 @@ EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Con
 
     ConfigSetDefaultBool(l_ConfigRsp, "LogGfxCmd", 0, "Log graphics task opcodes");
     ConfigSetDefaultBool(l_ConfigRsp, "LogSfxCmd", 0, "Log sound task opcodes");
-    ConfigSetDefaultBool(l_ConfigRsp, "EmulateSlowdown", 0, "Emulate simple RSP slowdown");
+    ConfigSetDefaultBool(l_ConfigRsp, "EmulateSlowdown", 0, "Emulate simple RSP slowdown\n# Note: Assumes all instructions take 5 cycles");
 
     l_PluginInit = 1;
     return M64ERR_SUCCESS;

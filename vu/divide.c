@@ -14,6 +14,7 @@
 \******************************************************************************/
 
 #include "divide.h"
+#include "../cycle.h"
 
 static s32 DivIn = 0; /* buffered numerator of division read from vector file */
 static s32 DivOut = 0; /* global division result set by VRCP/VRCPL/VRSQ/VRSQL */
@@ -1119,6 +1120,7 @@ NOINLINE static void do_div(i32 data, int sqrt, int precision)
         DivOut = -0x00010000l;
     else
         DivOut ^= (DivIn < 0) ? ~0 : 0;
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -1141,10 +1143,12 @@ VECTOR_OPERATION VRCP(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VR[result]);
     vs = vt; /* unused */
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -1169,10 +1173,12 @@ VECTOR_OPERATION VRCPL(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VR[result]);
     vs = vt; /* unused */
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -1195,10 +1201,12 @@ VECTOR_OPERATION VRCPH(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VR[result]);
     vs = vt; /* unused */
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -1218,10 +1226,12 @@ VECTOR_OPERATION VMOV(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VR[result]);
     vs = vt; /* unused */
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -1245,10 +1255,12 @@ VECTOR_OPERATION VRSQ(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VR[result]);
     vs = vt; /* unused */
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -1273,10 +1285,12 @@ VECTOR_OPERATION VRSQL(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VR[result]);
     vs = vt; /* unused */
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -1299,10 +1313,12 @@ VECTOR_OPERATION VRSQH(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VR[result]);
     vs = vt; /* unused */
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -1313,11 +1329,15 @@ VECTOR_OPERATION VNOP(v16 vs, v16 vt)
 
 #ifdef ARCH_MIN_SSE2
     vs = *(v16 *)VR[result];
+    cycle += CYCLES_SU_COMMON;
     return (vt = vs); /* -Wunused-but-set-parameter */
 #else
     vector_copy(V_result, VR[result]);
-    if (vt == vs)
+    if (vt == vs) {
+    cycle += CYCLES_SU_COMMON;
         return; /* -Wunused-but-set-parameter */
+    }
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }

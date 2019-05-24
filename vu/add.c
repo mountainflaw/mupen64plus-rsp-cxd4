@@ -14,6 +14,8 @@
 \******************************************************************************/
 
 #include "add.h"
+#include "../cycle.h"
+
 
 #ifdef ARCH_MIN_SSE2
 static INLINE void SIGNED_CLAMP_ADD(pi16 VD, pi16 VS, pi16 VT)
@@ -36,6 +38,7 @@ static INLINE void SIGNED_CLAMP_ADD(pi16 VD, pi16 VS, pi16 VT)
     min = _mm_adds_epi16(min, vco);
     max = _mm_adds_epi16(max, min);
     _mm_store_si128((v16 *)VD, max);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 static INLINE void SIGNED_CLAMP_SUB(pi16 VD, pi16 VS, pi16 VT)
@@ -65,6 +68,7 @@ static INLINE void SIGNED_CLAMP_SUB(pi16 VD, pi16 VS, pi16 VT)
     xmm = _mm_andnot_si128(xmm, vco); /* If it's NOT overflow, keep flag. */
     res = _mm_subs_epi16(res, xmm);
     _mm_store_si128((v16 *)VD, res);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 #else
@@ -87,6 +91,7 @@ static INLINE void SIGNED_CLAMP_ADD(pi16 VD, pi16 VS, pi16 VT)
         VD[i] |=  hi[i];
     for (i = 0; i < N; i++)
         VD[i] ^= 0x8000 & (hi[i] | lo[i]);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 static INLINE void SIGNED_CLAMP_SUB(pi16 VD, pi16 VS, pi16 VT)
@@ -108,6 +113,7 @@ static INLINE void SIGNED_CLAMP_SUB(pi16 VD, pi16 VS, pi16 VT)
         VD[i] |=  hi[i];
     for (i = 0; i < N; i++)
         VD[i] ^= 0x8000 & (hi[i] | lo[i]);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 #endif
@@ -123,6 +129,7 @@ INLINE static void clr_ci(pi16 VD, pi16 VS, pi16 VT)
  /* CTC2    $0, $vco # zeroing RSP flags VCF[0] */
     vector_wipe(cf_ne);
     vector_wipe(cf_co);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -137,6 +144,7 @@ INLINE static void clr_bi(pi16 VD, pi16 VS, pi16 VT)
  /* CTC2    $0, $vco # zeroing RSP flags VCF[0] */
     vector_wipe(cf_ne);
     vector_wipe(cf_co);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -174,6 +182,7 @@ INLINE static void do_abs(pi16 VD, pi16 VS, pi16 VT)
         res[i] -= cch[i];
     vector_copy(VACC_L, res);
     vector_copy(VD, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -191,6 +200,7 @@ INLINE static void set_co(pi16 VD, pi16 VS, pi16 VT)
     vector_wipe(cf_ne);
     for (i = 0; i < N; i++)
         cf_co[i] = sum[i] >> 16; /* native:  (sum[i] > +65535) */
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -208,6 +218,7 @@ INLINE static void set_bo(pi16 VD, pi16 VS, pi16 VT)
     for (i = 0; i < N; i++)
         cf_co[i] = (dif[i] < 0);
     vector_copy(VD, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -229,9 +240,11 @@ VECTOR_OPERATION VADD(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -254,9 +267,11 @@ VECTOR_OPERATION VSUB(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -279,9 +294,11 @@ VECTOR_OPERATION VABS(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -304,9 +321,11 @@ VECTOR_OPERATION VADDC(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -329,9 +348,11 @@ VECTOR_OPERATION VSUBC(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     COMPILER_FENCE();
     vs = *(v16 *)VD;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(V_result, VD);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -358,10 +379,14 @@ VECTOR_OPERATION VSAW(v16 vs, v16 vt)
 #endif
     }
 #ifdef ARCH_MIN_SSE2
+    cycle += CYCLES_SU_COMMON;
     return (vt = vs);
 #else
-    if (vt == vs)
+    if (vt == vs) {
+        cycle += CYCLES_SU_COMMON;
         return; /* -Wunused-but-set-parameter */
+    }
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }

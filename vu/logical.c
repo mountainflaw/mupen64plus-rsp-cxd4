@@ -14,17 +14,20 @@
 \******************************************************************************/
 
 #include "logical.h"
+#include "../cycle.h"
 
 VECTOR_OPERATION VAND(v16 vs, v16 vt)
 {
 #ifdef ARCH_MIN_SSE2
     vector_and(vs, vt);
     *(v16 *)VACC_L = vs;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(VACC_L, vt);
     vector_and(VACC_L, vs);
     vector_copy(V_result, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -36,6 +39,7 @@ VECTOR_OPERATION VNAND(v16 vs, v16 vt)
     vector_fill(vs);
     vector_xor(vs, vt);
     *(v16 *)VACC_L = vs;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(VACC_L, vt);
@@ -43,6 +47,7 @@ VECTOR_OPERATION VNAND(v16 vs, v16 vt)
     vector_fill(V_result);
     vector_xor(VACC_L, V_result);
     vector_copy(V_result, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -52,11 +57,13 @@ VECTOR_OPERATION VOR(v16 vs, v16 vt)
 #ifdef ARCH_MIN_SSE2
     vector_or(vs, vt);
     *(v16 *)VACC_L = vs;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(VACC_L, vt);
     vector_or(VACC_L, vs);
     vector_copy(V_result, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -68,6 +75,7 @@ VECTOR_OPERATION VNOR(v16 vs, v16 vt)
     vector_fill(vs);
     vector_xor(vs, vt);
     *(v16 *)VACC_L = vs;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(VACC_L, vt);
@@ -75,6 +83,7 @@ VECTOR_OPERATION VNOR(v16 vs, v16 vt)
     vector_fill(V_result);
     vector_xor(VACC_L, V_result);
     vector_copy(V_result, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -89,6 +98,7 @@ VECTOR_OPERATION VXOR(v16 vs, v16 vt)
     vector_copy(VACC_L, vt);
     vector_xor(VACC_L, vs);
     vector_copy(V_result, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
@@ -100,6 +110,7 @@ VECTOR_OPERATION VNXOR(v16 vs, v16 vt)
     vector_fill(vs);
     vector_xor(vs, vt);
     *(v16 *)VACC_L = vs;
+    cycle += CYCLES_SU_COMMON;
     return (vs);
 #else
     vector_copy(VACC_L, vt);
@@ -107,6 +118,7 @@ VECTOR_OPERATION VNXOR(v16 vs, v16 vt)
     vector_fill(V_result);
     vector_xor(VACC_L, V_result);
     vector_copy(V_result, VACC_L);
+    cycle += CYCLES_SU_COMMON;
     return;
 #endif
 }
