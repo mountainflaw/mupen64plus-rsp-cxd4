@@ -619,6 +619,7 @@ void LBV(unsigned vt, unsigned element, signed offset, unsigned base)
 
     addr = (SR[base] + 1*offset) & 0x00000FFF;
     VR_B(vt, e) = DMEM[BES(addr)];
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void LSV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -639,6 +640,7 @@ void LSV(unsigned vt, unsigned element, signed offset, unsigned base)
     }
     correction = (correction - 1) * HES(0x000);
     VR_S(vt, e) = *(pi16)(DMEM + addr - correction);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void LLV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -666,6 +668,7 @@ void LLV(unsigned vt, unsigned element, signed offset, unsigned base)
     VR_S(vt, e+0x0) = *(pi16)(DMEM + addr - correction);
     addr = (addr + 0x00000002) & 0x00000FFF; /* F3DLX 1.23:  addr%4 is 0x002. */
     VR_S(vt, e+0x2) = *(pi16)(DMEM + addr + correction);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void LDV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -751,6 +754,7 @@ void LDV(unsigned vt, unsigned element, signed offset, unsigned base)
         VR_S(vt, e+0x6) = *(pi16)(DMEM + addr + 0x005);
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SBV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -760,6 +764,7 @@ void SBV(unsigned vt, unsigned element, signed offset, unsigned base)
 
     addr = (SR[base] + 1*offset) & 0x00000FFF;
     DMEM[BES(addr)] = VR_B(vt, e);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SSV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -771,6 +776,7 @@ void SSV(unsigned vt, unsigned element, signed offset, unsigned base)
     DMEM[BES(addr)] = VR_B(vt, (e + 0x0));
     addr = (addr + 0x00000001) & 0x00000FFF;
     DMEM[BES(addr)] = VR_B(vt, (e + 0x1) & 0xF);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SLV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -792,6 +798,7 @@ void SLV(unsigned vt, unsigned element, signed offset, unsigned base)
     *(pi16)(DMEM + addr - correction) = VR_S(vt, e+0x0);
     addr = (addr + 0x00000002) & 0x00000FFF; /* F3DLX 0.95:  "Mario Kart 64" */
     *(pi16)(DMEM + addr + correction) = VR_S(vt, e+0x2);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SDV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -811,6 +818,7 @@ void SDV(unsigned vt, unsigned element, signed offset, unsigned base)
         for (i = 0; i < 8; i++)
             DMEM[BES(addr++ & 0x00000FFF)] = VR_B(vt, (e+i)&0xF);
 #endif
+        cycle += CYCLES_SU_COMMON;
         return;
     } /* Illegal elements with Boss Game Studios publications. */
     switch (addr & 07) {
@@ -881,6 +889,7 @@ void SDV(unsigned vt, unsigned element, signed offset, unsigned base)
         *(pi16)(DMEM + addr + 0x005) = VR_S(vt, e+0x6);
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -1006,6 +1015,7 @@ void LPV(unsigned vt, unsigned element, signed offset, unsigned base)
         VR[vt][07] = DMEM[addr + BES(0x006)] << 8;
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void LUV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1122,6 +1132,7 @@ void LUV(unsigned vt, unsigned element, signed offset, unsigned base)
         VR[vt][07] = DMEM[addr + BES(0x006)] << 7;
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SPV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1233,6 +1244,7 @@ void SPV(unsigned vt, unsigned element, signed offset, unsigned base)
         DMEM[addr + BES(0x006)] = (u8)(VR[vt][07] >> 8);
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SUV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1274,6 +1286,7 @@ void SUV(unsigned vt, unsigned element, signed offset, unsigned base)
     default: /* Completely legal, just never seen it be done. */
         message("SUV\nWeird addr.");
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -1304,6 +1317,7 @@ void LHV(unsigned vt, unsigned element, signed offset, unsigned base)
     VR[vt][02] = DMEM[addr + HES(0x004)] << 7;
     VR[vt][01] = DMEM[addr + HES(0x002)] << 7;
     VR[vt][00] = DMEM[addr + HES(0x000)] << 7;
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void LFV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1334,6 +1348,7 @@ void SHV(unsigned vt, unsigned element, signed offset, unsigned base)
     DMEM[addr + HES(0x004)] = (u8)(VR[vt][02] >> 7);
     DMEM[addr + HES(0x002)] = (u8)(VR[vt][01] >> 7);
     DMEM[addr + HES(0x000)] = (u8)(VR[vt][00] >> 7);
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SFV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1360,6 +1375,7 @@ void SFV(unsigned vt, unsigned element, signed offset, unsigned base)
     default:
         message("SFV\nIllegal element.");
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -1439,6 +1455,7 @@ void LQV(unsigned vt, unsigned element, signed offset, unsigned base)
         VR_S(vt,e+0x0) = *(pi16)(DMEM + addr + HES(0x00E));
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void LRV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1504,6 +1521,7 @@ void LRV(unsigned vt, unsigned element, signed offset, unsigned base)
     case 0x0/2:
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SQV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1566,6 +1584,7 @@ void SQV(unsigned vt, unsigned element, signed offset, unsigned base)
     default:
         message("SQV\nWeird addr.");
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SRV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1632,6 +1651,7 @@ void SRV(unsigned vt, unsigned element, signed offset, unsigned base)
     case 0x0/2:
         break;
     }
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
@@ -1660,6 +1680,7 @@ void LTV(unsigned vt, unsigned element, signed offset, unsigned base)
     }
     for (i = 0; i < 8; i++) /* SGI screwed LTV up on N64.  See STV instead. */
         VR[vt + i][(i - e/2) & 07] = *(pi16)(DMEM + addr + HES(2*i));
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SWV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1688,6 +1709,7 @@ void STV(unsigned vt, unsigned element, signed offset, unsigned base)
     }
     for (i = 0; i < 8; i++)
         *(pi16)(DMEM + addr + HES(2*i)) = VR[vt + (e/2 + i)%8][i];
+    cycle += CYCLES_SU_COMMON;
     return;
 }
 
