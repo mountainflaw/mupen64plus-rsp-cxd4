@@ -21,6 +21,11 @@
  */
 #include "module.h"
 
+/* cycles stuff */
+#include "cycle.h"
+long long int cycle;
+
+/* Emulate timings */
 /* memcpy() and memset() in SP DMA */
 #include <string.h>
 
@@ -310,11 +315,13 @@ void SP_DMA_WRITE(void)
 PROFILE_MODE void J(u32 inst)
 {
     set_PC(4 * inst);
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void JAL(u32 inst, u32 PC)
 {
     SR[ra] = FIT_IMEM(PC + LINK_OFF);
     set_PC(4 * inst);
+    cycle += CYCLES_SU_COMMON;
 }
 
 PROFILE_MODE int BEQ(u32 inst, u32 PC)
@@ -326,6 +333,7 @@ PROFILE_MODE int BEQ(u32 inst, u32 PC)
         return 0;
     set_PC(PC + 4*inst + SLOT_OFF);
     return 1;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE int BNE(u32 inst, u32 PC)
 {
@@ -336,6 +344,7 @@ PROFILE_MODE int BNE(u32 inst, u32 PC)
         return 0;
     set_PC(PC + 4*inst + SLOT_OFF);
     return 1;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE int BLEZ(u32 inst, u32 PC)
 {
@@ -345,6 +354,7 @@ PROFILE_MODE int BLEZ(u32 inst, u32 PC)
         return 0;
     set_PC(PC + 4*inst + SLOT_OFF);
     return 1;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE int BGTZ(u32 inst, u32 PC)
 {
@@ -354,6 +364,7 @@ PROFILE_MODE int BGTZ(u32 inst, u32 PC)
         return 0;
     set_PC(PC + 4*inst + SLOT_OFF);
     return 1;
+    cycle += CYCLES_SU_COMMON;
 }
 
 /*** scalar, R4000 bit-wise logical operations ***/
@@ -366,6 +377,7 @@ PROFILE_MODE void ANDI(u32 inst)
 
     SR[rt] = SR[rs] & immediate;
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void ORI(u32 inst)
 {
@@ -375,6 +387,7 @@ PROFILE_MODE void ORI(u32 inst)
 
     SR[rt] = SR[rs] | immediate;
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void XORI(u32 inst)
 {
@@ -384,6 +397,7 @@ PROFILE_MODE void XORI(u32 inst)
 
     SR[rt] = SR[rs] ^ immediate;
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void LUI(u32 inst)
 {
@@ -392,6 +406,7 @@ PROFILE_MODE void LUI(u32 inst)
 
     SR[rt] = (u32)immediate << 16; /* or:  SR[rt] = 0; SR[rt]31..16 = imm; */
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 
 /*** scalar, R4000 arithmetic operations ***/
@@ -406,6 +421,7 @@ PROFILE_MODE void ADDIU(u32 inst)
 
     SR[rt] = SR[rs] + (s16)(immediate);
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void SLTI(u32 inst)
 {
@@ -415,6 +431,7 @@ PROFILE_MODE void SLTI(u32 inst)
 
     SR[rt] = ((s32)(SR[rs]) < (s32)SIGNED_IMM16(immediate)) ? 1 : 0;
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void SLTIU(u32 inst)
 {
@@ -424,6 +441,7 @@ PROFILE_MODE void SLTIU(u32 inst)
 
     SR[rt] = ((u32)(SR[rs]) < (u32)SIGNED_IMM16(immediate)) ? 1 : 0;
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 
 /*** scalar, R4000 memory loads and stores ***/
@@ -439,6 +457,7 @@ PROFILE_MODE void LB(u32 inst)
     SR[rt] = DMEM[BES(addr) & 0x00000FFFul];
     SR[rt] = (s8)SR[rt];
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void LH(u32 inst)
 {
@@ -454,6 +473,7 @@ PROFILE_MODE void LH(u32 inst)
     ;
     SR[rt] = (s16)SR[rt];
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void LW(u32 inst)
 {
@@ -470,6 +490,7 @@ PROFILE_MODE void LW(u32 inst)
     SR_B(rt, 2) = DMEM[BES(addr + 2) & 0x00000FFFul];
     SR_B(rt, 3) = DMEM[BES(addr + 3) & 0x00000FFFul];
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void LBU(u32 inst)
 {
@@ -481,6 +502,7 @@ PROFILE_MODE void LBU(u32 inst)
     addr = SR[base] + offset;
     SR[rt] = DMEM[BES(addr) & 0x00000FFFul];
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void LHU(u32 inst)
 {
@@ -495,6 +517,7 @@ PROFILE_MODE void LHU(u32 inst)
       | DMEM[BES(addr + 1) & 0x00000FFFul] <<  0
     ;
     SR[zero] = 0x00000000;
+    cycle += CYCLES_SU_COMMON;
 }
 
 PROFILE_MODE void SB(u32 inst)
@@ -506,6 +529,7 @@ PROFILE_MODE void SB(u32 inst)
 
     addr = SR[base] + offset;
     DMEM[BES(addr) & 0x00000FFFul] = (u8)(SR[rt] & 0xFFu);
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void SH(u32 inst)
 {
@@ -517,6 +541,7 @@ PROFILE_MODE void SH(u32 inst)
     addr = SR[base] + offset;
     DMEM[BES(addr + 0) & 0x00000FFFul] = SR_B(rt, 2);
     DMEM[BES(addr + 1) & 0x00000FFFul] = SR_B(rt, 3);
+    cycle += CYCLES_SU_COMMON;
 }
 PROFILE_MODE void SW(u32 inst)
 {
@@ -530,6 +555,7 @@ PROFILE_MODE void SW(u32 inst)
     DMEM[BES(addr + 1) & 0x00000FFFul] = SR_B(rt, 1);
     DMEM[BES(addr + 2) & 0x00000FFFul] = SR_B(rt, 2);
     DMEM[BES(addr + 3) & 0x00000FFFul] = SR_B(rt, 3);
+    cycle += CYCLES_SU_COMMON;
 }
 
 /*** scalar, coprocessor operations (vector unit) ***/
@@ -2133,6 +2159,7 @@ set_branch_delay:
     }
 RSP_halted_CPU_exit_point:
     GET_RCP_REG(SP_PC_REG) = 0x04001000 | FIT_IMEM(PC);
-
+    SLEEP_FOR_CYCLES(cycle);
+    cycle = 0;
     return;
 }

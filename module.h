@@ -69,6 +69,8 @@ typedef enum {
 #define CFG_DBG_LOG_GFX      (*(pi32)(conf + 0x22))
 #define CFG_DBG_LOG_SFX      (*(pi32)(conf + 0x26))
 
+#define CFG_DBG_EMU_SLOWDOWN      (*(pi32)(conf + 0x30))
+
 /*
  * Update RSP configuration memory from local file resource.
  */

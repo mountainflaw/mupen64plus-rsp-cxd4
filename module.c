@@ -89,6 +89,7 @@ NOINLINE void update_conf(const char* source)
     CFG_MEND_SEMAPHORE_LOCK = ConfigGetParamBool(l_ConfigRsp, "SupportCPUSemaphoreLock");
     CFG_DBG_LOG_GFX = ConfigGetParamBool(l_ConfigRsp, "LogGfxCmd");
     CFG_DBG_LOG_SFX = ConfigGetParamBool(l_ConfigRsp, "LogSfxCmd");
+    CFG_DBG_EMU_SLOWDOWN = ConfigGetParamBool(l_ConfigRsp, "EmulateSlowdown");
 }
 
 static void DebugMessage(int level, const char *message, ...) ATTR_FMT(2, 3);
@@ -196,6 +197,7 @@ EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Con
 
     ConfigSetDefaultBool(l_ConfigRsp, "LogGfxCmd", 0, "Log graphics task opcodes");
     ConfigSetDefaultBool(l_ConfigRsp, "LogSfxCmd", 0, "Log sound task opcodes");
+    ConfigSetDefaultBool(l_ConfigRsp, "EmulateSlowdown", 0, "Emulate simple RSP slowdown");
 
     l_PluginInit = 1;
     return M64ERR_SUCCESS;
