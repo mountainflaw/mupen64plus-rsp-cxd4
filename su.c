@@ -1661,26 +1661,29 @@ void SRV(unsigned vt, unsigned element, signed offset, unsigned base)
  */
 void LTV(unsigned vt, unsigned element, signed offset, unsigned base)
 {
-    register u32 addr;
-    register unsigned int i;
-    const unsigned int e = element;
+    if (!CFG_CEN_LIGHTING)
+    {
+        register u32 addr;
+        register unsigned int i;
+        const unsigned int e = element;
 
-    if (e & 1) {
-        message("LTV\nIllegal element.");
-        return;
+        if (e & 1) {
+            message("LTV\nIllegal element.");
+            return;
+        }
+        if (vt & 07) {
+            message("LTV\nUncertain case!");
+            return; /* For LTV I am not sure; for STV I have an idea. */
+        }
+        addr = (SR[base] + 16*offset) & 0x00000FFF;
+        if (addr & 0x0000000F) {
+            message("LTV\nIllegal addr.");
+            return;
+        }
+        for (i = 0; i < 8; i++) /* SGI screwed LTV up on N64.  See STV instead. */
+            VR[vt + i][(i - e/2) & 07] = *(pi16)(DMEM + addr + HES(2*i));
+        cycle += CYCLES_SU_COMMON;
     }
-    if (vt & 07) {
-        message("LTV\nUncertain case!");
-        return; /* For LTV I am not sure; for STV I have an idea. */
-    }
-    addr = (SR[base] + 16*offset) & 0x00000FFF;
-    if (addr & 0x0000000F) {
-        message("LTV\nIllegal addr.");
-        return;
-    }
-    for (i = 0; i < 8; i++) /* SGI screwed LTV up on N64.  See STV instead. */
-        VR[vt + i][(i - e/2) & 07] = *(pi16)(DMEM + addr + HES(2*i));
-    cycle += CYCLES_SU_COMMON;
     return;
 }
 void SWV(unsigned vt, unsigned element, signed offset, unsigned base)
@@ -1690,26 +1693,29 @@ void SWV(unsigned vt, unsigned element, signed offset, unsigned base)
 }
 void STV(unsigned vt, unsigned element, signed offset, unsigned base)
 {
-    register u32 addr;
-    register unsigned int i;
-    const unsigned int e = element;
+    if (!CFG_CEN_LIGHTING)
+    {
+        register u32 addr;
+        register unsigned int i;
+        const unsigned int e = element;
 
-    if (e & 1) {
-        message("STV\nIllegal element.");
-        return;
+        if (e & 1) {
+            message("STV\nIllegal element.");
+            return;
+        }
+        if (vt & 07) {
+            message("STV\nUncertain case!");
+            return; /* vt &= 030; */
+        }
+        addr = (SR[base] + 16*offset) & 0x00000FFF;
+        if (addr & 0x0000000F) {
+            message("STV\nIllegal addr.");
+            return;
+        }
+        for (i = 0; i < 8; i++)
+            *(pi16)(DMEM + addr + HES(2*i)) = VR[vt + (e/2 + i)%8][i];
+        cycle += CYCLES_SU_COMMON;
     }
-    if (vt & 07) {
-        message("STV\nUncertain case!");
-        return; /* vt &= 030; */
-    }
-    addr = (SR[base] + 16*offset) & 0x00000FFF;
-    if (addr & 0x0000000F) {
-        message("STV\nIllegal addr.");
-        return;
-    }
-    for (i = 0; i < 8; i++)
-        *(pi16)(DMEM + addr + HES(2*i)) = VR[vt + (e/2 + i)%8][i];
-    cycle += CYCLES_SU_COMMON;
     return;
 }
 

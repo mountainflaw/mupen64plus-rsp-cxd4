@@ -69,6 +69,8 @@ typedef enum {
 #define CFG_DBG_LOG_GFX      (*(pi32)(conf + 0x22))
 #define CFG_DBG_LOG_SFX      (*(pi32)(conf + 0x26))
 
+#define CFG_CEN_LIGHTING      (*(pi32)(conf + 0x34))
+
 #define CFG_DBG_EMU_SLOWDOWN      (*(pi32)(conf + 0x30))
 
 /*

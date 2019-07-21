@@ -90,6 +90,7 @@ NOINLINE void update_conf(const char* source)
     CFG_DBG_LOG_GFX = ConfigGetParamBool(l_ConfigRsp, "LogGfxCmd");
     CFG_DBG_LOG_SFX = ConfigGetParamBool(l_ConfigRsp, "LogSfxCmd");
     CFG_DBG_EMU_SLOWDOWN = ConfigGetParamBool(l_ConfigRsp, "EmulateSlowdown");
+    CFG_CEN_LIGHTING = ConfigGetParamBool(l_ConfigRsp, "Cen64Lighting");
 }
 
 static void DebugMessage(int level, const char *message, ...) ATTR_FMT(2, 3);
@@ -198,6 +199,7 @@ EXPORT m64p_error CALL PluginStartup(m64p_dynlib_handle CoreLibHandle, void *Con
     ConfigSetDefaultBool(l_ConfigRsp, "LogGfxCmd", 0, "Log graphics task opcodes");
     ConfigSetDefaultBool(l_ConfigRsp, "LogSfxCmd", 0, "Log sound task opcodes");
     ConfigSetDefaultBool(l_ConfigRsp, "EmulateSlowdown", 0, "Emulate simple RSP slowdown\n# Note: Assumes all instructions take 5 cycles");
+    ConfigSetDefaultBool(l_ConfigRsp, "Cen64Lighting", 0, "Have Cen64 style lighting (disables STV and LTV RSP instrs)");
 
     l_PluginInit = 1;
     return M64ERR_SUCCESS;
